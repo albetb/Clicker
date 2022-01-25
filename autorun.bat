@@ -1,1 +1,1 @@
-python clicker_game.py
+python start.py

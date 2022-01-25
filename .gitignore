@@ -4,3 +4,4 @@ savegame.txt
 
 virtualenv
 venv
+__pycache__
