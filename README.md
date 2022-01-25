@@ -1,1 +1,3 @@
-Clicker
+Simple idle game
+
+ ~ by Albetb with ❤
