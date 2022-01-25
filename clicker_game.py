@@ -6,7 +6,7 @@ pygame.init()
 GAME_VERSION = "0.0.1b"
 
 clock = pygame.time.Clock()
-time_delta = 10
+fps = 10 # Frame per second
 
 white = (255, 255, 255)
 black = (0, 0, 0)
@@ -76,8 +76,8 @@ def display_number(num, precision = "low"):
     elif num < 10 ** 15:
         return f"{round(num / (10 ** 12), 2)} T"
 
-def autominer(food, pop):
-    return round(food + production(pop), 2)
+def autominer(food, wood, pop, harvester, lumber):
+    return round(food + production(harvester) - pop * 0.005, 3), round(wood + 0.8 * production(lumber), 3)
  
 def text(text, color, x, y, fsize):
     font = pygame.font.Font('freesansbold.ttf', fsize)
@@ -88,11 +88,13 @@ def text(text, color, x, y, fsize):
  
 def main_loop():
     global clock
-    global time_delta
+    global fps
     
     food = 0
+    wood = 0
     pop = 0
     harvester = 0
+    lumber = 0
     menu = 0
     game_running = True
 
@@ -109,23 +111,31 @@ def main_loop():
             pop = int(data.split("$$")[0])
             food = float(data.split("$$")[1])
             harvester = int(data.split("$$")[2])
+            wood = float(data.split("$$")[3])
+            lumber = int(data.split("$$")[4])
     
-    food_button = Image(r".\asset\buttonfood.png", 291, 200, 218, 200, 0, 0.5, 0.68, 0)
     background = Image(r".\asset\background_explore.jpg", 0, 0, display_width, display_height)
+
+    food_button = Image(r".\asset\buttonfood.png", 291, 200, 218, 200, 0, 0.5, 0.68, 0)
     explore_menu = Image(r".\asset\button_large.png", 430, 480, 275, 100, "Explore")
     city_menu = Image(r".\asset\button_large.png", 90, 480, 275, 100, "City")
-    food_prod_tag = Image(r".\asset\button_large.png", 110, 30, 240, 80, 0, 0.68)
     food_tag = Image(r".\asset\textboxfood.png", 20, 20, 190, 100, 0, 0.4)
-    pop_tag = Image(r".\asset\poptag.png", 20, 140, 190, 100, 0, 0.4)
-    pop_plus = Image(r".\asset\buttonroundplus.png", 248, 149, 68, 68, menu=1)
-    pop_cost = Image(r".\asset\button_large_food.png", 230, 140, 275, 100, 0, 0.52, menu=1)
-    harvester_tag = Image(r".\asset\button_large_harvester.png", 90, 290, 275, 100, 0, 0.50, menu=1)
-    harvester_plus = Image(r".\asset\rightbuttonplus.png", 475, 290, 80, 100, menu=1)
-    harvester_minus = Image(r".\asset\leftbuttonminus.png", 380, 290, 80, 100, menu=1)
+    food_prod_tag = Image(r".\asset\button_large.png", 110, 30, 240, 80, 0, 0.68)
+    wood_tag = Image(r".\asset\woodtag.png", 380, 20, 190, 100, 0, 0.4)
+    wood_prod_tag = Image(r".\asset\button_large.png", 460, 30, 240, 80, 0, 0.68)
+    pop_tag = Image(r".\asset\poptag.png", 20, 135, 190, 100, 0, 0.4)
+    pop_plus = Image(r".\asset\buttonroundplus.png", 248, 139, 68, 68, menu=1)
+    pop_cost = Image(r".\asset\button_large_food.png", 230, 130, 275, 100, 0, 0.52, menu=1)
+    harvester_tag = Image(r".\asset\button_large_harvester.png", 90, 250, 275, 100, 0, 0.50, menu=1)
+    harvester_plus = Image(r".\asset\rightbuttonplus.png", 475, 250, 80, 100, menu=1)
+    harvester_minus = Image(r".\asset\leftbuttonminus.png", 380, 250, 80, 100, menu=1)
+    lumber_tag = Image(r".\asset\button_large_lumberer.png", 90, 365, 275, 100, 0, 0.50, menu=1)
+    lumber_plus = Image(r".\asset\rightbuttonplus.png", 475, 365, 80, 100, menu=1)
+    lumber_minus = Image(r".\asset\leftbuttonminus.png", 380, 365, 80, 100, menu=1)
 
     while game_running:
         
-        food = autominer(food, harvester)
+        food, wood = autominer(food, wood, pop, harvester, lumber)
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -141,7 +151,7 @@ def main_loop():
                         pop += 1
 
                 if food_button.collide(mopos, menu):
-                    food += food_click(pop)
+                    food += food_click(harvester)
 
                 if explore_menu.collide(mopos, menu):
                     menu = 0
@@ -150,12 +160,20 @@ def main_loop():
                     menu = 1
 
                 if harvester_plus.collide(mopos, menu):
-                    if pop > harvester:
+                    if pop > harvester + lumber:
                         harvester += 1
 
                 if harvester_minus.collide(mopos, menu):
                     if harvester > 0:
                         harvester -= 1
+
+                if lumber_plus.collide(mopos, menu):
+                    if pop > harvester + lumber:
+                        lumber += 1
+
+                if lumber_minus.collide(mopos, menu):
+                    if lumber > 0:
+                        lumber -= 1
 
                 if food >= 2147483647:
                     print("You Beat the game")
@@ -176,28 +194,38 @@ def main_loop():
 
         pop_tag.set_text(display_number(pop))
         food_tag.set_text(display_number(food))
-        food_prod_tag.set_text(f"+{display_number(production(harvester) * 10, 'high')}/s")
+        wood_tag.set_text(display_number(wood))
+        food_prod_tag.set_text(f"{display_number(production(harvester) * 10 - 0.05 * pop, 'high')}/s")
+        wood_prod_tag.set_text(f"{display_number(production(harvester) * 10 * 0.8, 'high')}/s")
 
         food_prod_tag.draw(menu)
         food_tag.draw(menu)
+        wood_prod_tag.draw(menu)
+        wood_tag.draw(menu)
         pop_tag.draw(menu)
 
-        food_button.set_text(display_number(food_click(pop), "high"))
+        food_button.set_text(display_number(food_click(harvester), "high"))
         food_button.draw(menu)
+
         harvester_tag.set_text(display_number(harvester))
         harvester_tag.draw(menu)
         harvester_plus.draw(menu)
         harvester_minus.draw(menu)
+
+        lumber_tag.set_text(display_number(lumber))
+        lumber_tag.draw(menu)
+        lumber_plus.draw(menu)
+        lumber_minus.draw(menu)
 
         pop_cost.set_text(population_cost(pop))
         pop_cost.draw(menu)
         pop_plus.draw(menu)
         
         with open('savegame.txt', 'w') as file:
-            file.write(f"{pop}$${food}$${harvester}")
+            file.write(f"{pop}$${food}$${harvester}$${wood}$${lumber}")
 
         pygame.display.update()
-        clock.tick(time_delta)
+        clock.tick(fps)
 
 main_loop()
 pygame.quit()
