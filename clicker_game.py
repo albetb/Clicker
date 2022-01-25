@@ -1,7 +1,8 @@
-
+# -*- coding: utf-8 -*-
 from logging import exception
 import pygame # pip install pygame
 #import time
+import os
 
 pygame.init()
 GAME_VERSION = "0.0.1b"
@@ -21,7 +22,23 @@ display_width = 800
 display_height = 600
 display = pygame.display.set_mode((display_width, display_height))
 pygame.display.set_caption("Clicker")
- 
+
+ASSET_DIR = os.path.join(".", "asset")
+BACKGROUND_EXPLORE = os.path.join(ASSET_DIR, "background_explore.jpg")
+BACKGROUND_CITY = os.path.join(ASSET_DIR, "background_city.png")
+BUTTON_FOOD = os.path.join(ASSET_DIR, "buttonfood.png")
+BUTTON_LARGE = os.path.join(ASSET_DIR, "button_large.png")
+BUTTON_LARGE_SELECTED = os.path.join(ASSET_DIR, "button_large_selected.png")
+BUTTON_LARGE_FOOD = os.path.join(ASSET_DIR, "button_large_food.png")
+BUTTON_LARGE_HARVESTER = os.path.join(ASSET_DIR, "button_large_harvester.png")
+BUTTON_LARGE_LUMBERER = os.path.join(ASSET_DIR, "button_large_lumberer.png")
+BUTTON_ROUND_PLUS = os.path.join(ASSET_DIR, "buttonroundplus.png")
+LEFT_BUTTON_MINUS = os.path.join(ASSET_DIR, "leftbuttonminus.png")
+POP_TAG = os.path.join(ASSET_DIR, "poptag.png")
+RIGHT_BUTTON_PLUS = os.path.join(ASSET_DIR, "rightbuttonplus.png")
+TEXTBOX_FOOD = os.path.join(ASSET_DIR, "textboxfood.png")
+WOOD_TAG = os.path.join(ASSET_DIR, "woodtag.png")
+
 class Image:
     def __init__(self, path, x, y, w, h, text = "", textx = 0.5, texty = 0.5, menu = -1):
         self.path = path # Image relative path
@@ -117,24 +134,24 @@ def main_loop():
             wood = float(data.split("$$")[3])
             lumber = int(data.split("$$")[4])
     
-    background = Image(r".\asset\background_explore.jpg", 0, 0, display_width, display_height)
+    background = Image(BACKGROUND_EXPLORE, 0, 0, display_width, display_height)
 
-    food_button = Image(r".\asset\buttonfood.png", 291, 200, 218, 200, 0, 0.5, 0.68, 0)
-    explore_menu = Image(r".\asset\button_large.png", 430, 480, 275, 100, "Explore")
-    city_menu = Image(r".\asset\button_large.png", 90, 480, 275, 100, "City")
-    food_tag = Image(r".\asset\textboxfood.png", 20, 20, 190, 100, 0, 0.4)
-    food_prod_tag = Image(r".\asset\button_large.png", 110, 30, 240, 80, 0, 0.68)
-    wood_tag = Image(r".\asset\woodtag.png", 380, 20, 190, 100, 0, 0.4)
-    wood_prod_tag = Image(r".\asset\button_large.png", 460, 30, 240, 80, 0, 0.68)
-    pop_tag = Image(r".\asset\poptag.png", 20, 135, 190, 100, 0, 0.4)
-    pop_plus = Image(r".\asset\buttonroundplus.png", 248, 139, 68, 68, menu=1)
-    pop_cost = Image(r".\asset\button_large_food.png", 230, 130, 275, 100, 0, 0.52, menu=1)
-    harvester_tag = Image(r".\asset\button_large_harvester.png", 90, 250, 275, 100, 0, 0.50, menu=1)
-    harvester_plus = Image(r".\asset\rightbuttonplus.png", 475, 250, 80, 100, menu=1)
-    harvester_minus = Image(r".\asset\leftbuttonminus.png", 380, 250, 80, 100, menu=1)
-    lumber_tag = Image(r".\asset\button_large_lumberer.png", 90, 365, 275, 100, 0, 0.50, menu=1)
-    lumber_plus = Image(r".\asset\rightbuttonplus.png", 475, 365, 80, 100, menu=1)
-    lumber_minus = Image(r".\asset\leftbuttonminus.png", 380, 365, 80, 100, menu=1)
+    food_button = Image(BUTTON_FOOD, 291, 200, 218, 200, 0, 0.5, 0.68, 0)
+    explore_menu = Image(BUTTON_LARGE, 430, 480, 275, 100, "Explore")
+    city_menu = Image(BUTTON_LARGE, 90, 480, 275, 100, "City")
+    food_tag = Image(TEXTBOX_FOOD, 20, 20, 190, 100, 0, 0.4)
+    food_prod_tag = Image(BUTTON_LARGE, 110, 30, 240, 80, 0, 0.68)
+    wood_tag = Image(WOOD_TAG, 380, 20, 190, 100, 0, 0.4)
+    wood_prod_tag = Image(BUTTON_LARGE, 460, 30, 240, 80, 0, 0.68)
+    pop_tag = Image(POP_TAG, 20, 135, 190, 100, 0, 0.4)
+    pop_plus = Image(BUTTON_ROUND_PLUS, 248, 139, 68, 68, menu=1)
+    pop_cost = Image(BUTTON_LARGE_FOOD, 230, 130, 275, 100, 0, 0.52, menu=1)
+    harvester_tag = Image(BUTTON_LARGE_HARVESTER, 90, 250, 275, 100, 0, 0.50, menu=1)
+    harvester_plus = Image(RIGHT_BUTTON_PLUS, 475, 250, 80, 100, menu=1)
+    harvester_minus = Image(LEFT_BUTTON_MINUS, 380, 250, 80, 100, menu=1)
+    lumber_tag = Image(BUTTON_LARGE_LUMBERER, 90, 365, 275, 100, 0, 0.50, menu=1)
+    lumber_plus = Image(RIGHT_BUTTON_PLUS, 475, 365, 80, 100, menu=1)
+    lumber_minus = Image(LEFT_BUTTON_MINUS, 380, 365, 80, 100, menu=1)
 
     while game_running:
         
@@ -183,13 +200,13 @@ def main_loop():
                     game_running = False
 
         if menu == 0:
-            background.change(r".\asset\background_explore.jpg")
-            city_menu.change(r".\asset\button_large.png")
-            explore_menu.change(r".\asset\button_large_selected.png")
+            background.change(BACKGROUND_EXPLORE)
+            city_menu.change(BUTTON_LARGE)
+            explore_menu.change(BUTTON_LARGE_SELECTED)
         elif menu == 1:
-            background.change(r".\asset\background_city.png")
-            city_menu.change(r".\asset\button_large_selected.png")
-            explore_menu.change(r".\asset\button_large.png")
+            background.change(BACKGROUND_CITY)
+            city_menu.change(BUTTON_LARGE_SELECTED)
+            explore_menu.change(BUTTON_LARGE)
         
         background.draw(menu)
         explore_menu.draw(menu)
