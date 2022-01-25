@@ -1,4 +1,5 @@
 
+from logging import exception
 import pygame # pip install pygame
 #import time
 
@@ -100,9 +101,11 @@ def main_loop():
 
     try:
         with open('savegame.txt', 'r') as file:
-            pass
+            if len(file.read().split("$$")) < 5:
+                raise exception
     except:
         file = open("savegame.txt", "w")
+        file.write("")
         file.close()
 
     with open('savegame.txt', 'r') as file:
@@ -196,7 +199,7 @@ def main_loop():
         food_tag.set_text(display_number(food))
         wood_tag.set_text(display_number(wood))
         food_prod_tag.set_text(f"{display_number(production(harvester) * 10 - 0.05 * pop, 'high')}/s")
-        wood_prod_tag.set_text(f"{display_number(production(harvester) * 10 * 0.8, 'high')}/s")
+        wood_prod_tag.set_text(f"{display_number(production(lumber) * 10 * 0.8, 'high')}/s")
 
         food_prod_tag.draw(menu)
         food_tag.draw(menu)
