@@ -3,7 +3,7 @@ import pygame # pip install pygame
 #import time
 
 pygame.init()
-GAME_VERSION = "0.0.1"
+GAME_VERSION = "0.0.1b"
 
 clock = pygame.time.Clock()
 time_delta = 10
@@ -22,17 +22,16 @@ display = pygame.display.set_mode((display_width, display_height))
 pygame.display.set_caption("Clicker")
  
 class Image:
-    def __init__(self, path, x, y, w, h, text = "", modx = 0.5, mody = 0.5):
+    def __init__(self, path, x, y, w, h, text = "", textx = 0.5, texty = 0.5):
         self.path = path
         self.x = x
         self.y = y
         self.w = w
         self.h = h
-        self.counter = not isinstance(text, str)
         self.text = ""
         self.textRect = 0
-        self.modx = modx
-        self.mody = mody
+        self.textx = textx
+        self.texty = texty
 
         self.change(self.path)
         self.set_text(text)
@@ -43,7 +42,7 @@ class Image:
             self.text = font.render(str(text), True, color)
             self.textRect = self.text.get_rect()
             avg = lambda a, l: (2 * a + l) / 2
-            self.textRect.center = (avg(self.x, self.w) - (0.5 - self.modx) * self.w, avg(self.y, self.h) - (size // 4) - (0.5 - self.mody) * self.h)
+            self.textRect.center = (avg(self.x, self.w) - (0.5 - self.textx) * self.w, avg(self.y, self.h) - (size / 6) - (0.5 - self.texty) * self.h)
 
     def change(self, path):
         picture = pygame.image.load(path)
@@ -62,7 +61,7 @@ population_cost = lambda pop: round(((pop + 1) * 50) ** 1.1)
 food_click = lambda pop: 10 + pop ** 1.5
 
 def display_number(num, precision = "low"):
-    if num < 10 ** 3 and precision == "low":
+    if num < 10 ** 3 and (precision == "low" or num == round(num)):
         return f"{int(round(num, 0))}"
     elif num < 10 ** 3 and precision == "high":
         return f"{round(num, 2)}"
@@ -89,10 +88,18 @@ def main_loop():
     global clock
     global time_delta
     
-    food = 1
+    food = 0
     pop = 0
     menu = 0
     game_running = True
+
+    try:
+        with open('savegame.txt', 'r') as file:
+            pass
+    except:
+        file = open("savegame.txt", "w")
+        file.close()
+
     with open('savegame.txt', 'r') as file:
         data = file.read()
         if len(data) != 0:
@@ -103,6 +110,7 @@ def main_loop():
     background = Image(r".\asset\background_explore.jpg", 0, 0, display_width, display_height)
     explore_menu = Image(r".\asset\button_large.png", 430, 480, 275, 100, "Explore")
     city_menu = Image(r".\asset\button_large.png", 90, 480, 275, 100, "City")
+    food_prod_tag = Image(r".\asset\button_large.png", 110, 30, 240, 80, 0, 0.68)
     food_tag = Image(r".\asset\textboxfood.png", 20, 20, 190, 100, 0, 0.4)
     pop_tag = Image(r".\asset\poptag.png", 20, 140, 190, 100, 0, 0.4)
     pop_plus = Image(r".\asset\buttonroundplus.png", 248, 149, 68, 68)
@@ -153,8 +161,10 @@ def main_loop():
 
         pop_tag.set_text(display_number(pop))
         food_tag.set_text(display_number(food))
-        text(f"+{display_number(production(pop) * 10, 'high')}/s", black, 265, 60, 30)
+        food_prod_tag.set_text(f"+{display_number(production(pop) * 10, 'high')}/s")
+        #text(f"+{display_number(production(pop) * 10, 'high')}/s", black, 265, 60, 30)
 
+        food_prod_tag.draw()
         food_tag.draw()
         pop_tag.draw()
 
