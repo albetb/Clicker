@@ -22,16 +22,17 @@ display = pygame.display.set_mode((display_width, display_height))
 pygame.display.set_caption("Clicker")
  
 class Image:
-    def __init__(self, path, x, y, w, h, text = "", textx = 0.5, texty = 0.5):
-        self.path = path
-        self.x = x
-        self.y = y
-        self.w = w
-        self.h = h
-        self.text = ""
-        self.textRect = 0
-        self.textx = textx
-        self.texty = texty
+    def __init__(self, path, x, y, w, h, text = "", textx = 0.5, texty = 0.5, menu = -1):
+        self.path = path # Image relative path
+        self.x = x # X positioning, if x ↑ image →
+        self.y = y # Y positioning, if y ↑ image ↓
+        self.w = w # Image width
+        self.h = h # Image height
+        self.text = "" # Text of image
+        self.textRect = 0 # Needed to display text
+        self.textx = textx # X positioning of text [0, 1], 1 is 100% right
+        self.texty = texty # Y positioning of text [0, 1], 1 is 100% down
+        self.menu = menu # Set in what case image is displayed, -1 everytime
 
         self.change(self.path)
         self.set_text(text)
@@ -48,13 +49,14 @@ class Image:
         picture = pygame.image.load(path)
         self.picture = pygame.transform.scale(picture, (self.w, self.h))
 
-    def draw(self):
-        display.blit(self.picture, (self.x, self.y))
-        if self.text != "":
-            display.blit(self.text, self.textRect)
+    def draw(self, menu):
+        if self.menu < 0 or self.menu == menu:
+            display.blit(self.picture, (self.x, self.y))
+            if self.text != "":
+                display.blit(self.text, self.textRect)
 
-    def collide(self, p):
-        return all([self.x <= p[0], p[0] <= self.x + self.w, self.y <= p[1], p[1] <= self.y + self.h])
+    def collide(self, p, menu):
+        return all([self.x <= p[0], p[0] <= self.x + self.w, self.y <= p[1], p[1] <= self.y + self.h, self.menu < 0 or menu == self.menu])
 
 production = lambda pop: 0.05 * (pop ** 1.05) * (1 + (pop // 10) * 0.5)
 population_cost = lambda pop: round(((pop + 1) * 50) ** 1.1)
@@ -90,6 +92,7 @@ def main_loop():
     
     food = 0
     pop = 0
+    harvester = 0
     menu = 0
     game_running = True
 
@@ -105,20 +108,24 @@ def main_loop():
         if len(data) != 0:
             pop = int(data.split("$$")[0])
             food = float(data.split("$$")[1])
+            harvester = int(data.split("$$")[2])
     
-    food_button = Image(r".\asset\buttonfood.png", 291, 200, 218, 200, 0, 0.5, 0.68)
+    food_button = Image(r".\asset\buttonfood.png", 291, 200, 218, 200, 0, 0.5, 0.68, 0)
     background = Image(r".\asset\background_explore.jpg", 0, 0, display_width, display_height)
     explore_menu = Image(r".\asset\button_large.png", 430, 480, 275, 100, "Explore")
     city_menu = Image(r".\asset\button_large.png", 90, 480, 275, 100, "City")
     food_prod_tag = Image(r".\asset\button_large.png", 110, 30, 240, 80, 0, 0.68)
     food_tag = Image(r".\asset\textboxfood.png", 20, 20, 190, 100, 0, 0.4)
     pop_tag = Image(r".\asset\poptag.png", 20, 140, 190, 100, 0, 0.4)
-    pop_plus = Image(r".\asset\buttonroundplus.png", 248, 149, 68, 68)
-    pop_cost = Image(r".\asset\button_large_food.png", 230, 140, 275, 100, 0, 0.52)
+    pop_plus = Image(r".\asset\buttonroundplus.png", 248, 149, 68, 68, menu=1)
+    pop_cost = Image(r".\asset\button_large_food.png", 230, 140, 275, 100, 0, 0.52, menu=1)
+    harvester_tag = Image(r".\asset\button_large_harvester.png", 90, 290, 275, 100, 0, 0.50, menu=1)
+    harvester_plus = Image(r".\asset\rightbuttonplus.png", 475, 290, 80, 100, menu=1)
+    harvester_minus = Image(r".\asset\leftbuttonminus.png", 380, 290, 80, 100, menu=1)
 
     while game_running:
         
-        food = autominer(food, pop)
+        food = autominer(food, harvester)
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -128,19 +135,27 @@ def main_loop():
 
                 mopos = pygame.mouse.get_pos()
 
-                if pop_plus.collide(mopos) and menu == 1:
+                if pop_plus.collide(mopos, menu):
                     if food >= population_cost(pop):
                         food -= population_cost(pop)
                         pop += 1
 
-                if food_button.collide(mopos) and menu == 0:
+                if food_button.collide(mopos, menu):
                     food += food_click(pop)
 
-                if explore_menu.collide(mopos):
+                if explore_menu.collide(mopos, menu):
                     menu = 0
                     
-                if city_menu.collide(mopos):
+                if city_menu.collide(mopos, menu):
                     menu = 1
+
+                if harvester_plus.collide(mopos, menu):
+                    if pop > harvester:
+                        harvester += 1
+
+                if harvester_minus.collide(mopos, menu):
+                    if harvester > 0:
+                        harvester -= 1
 
                 if food >= 2147483647:
                     print("You Beat the game")
@@ -155,29 +170,31 @@ def main_loop():
             city_menu.change(r".\asset\button_large_selected.png")
             explore_menu.change(r".\asset\button_large.png")
         
-        background.draw()
-        explore_menu.draw()
-        city_menu.draw()
+        background.draw(menu)
+        explore_menu.draw(menu)
+        city_menu.draw(menu)
 
         pop_tag.set_text(display_number(pop))
         food_tag.set_text(display_number(food))
-        food_prod_tag.set_text(f"+{display_number(production(pop) * 10, 'high')}/s")
-        #text(f"+{display_number(production(pop) * 10, 'high')}/s", black, 265, 60, 30)
+        food_prod_tag.set_text(f"+{display_number(production(harvester) * 10, 'high')}/s")
 
-        food_prod_tag.draw()
-        food_tag.draw()
-        pop_tag.draw()
+        food_prod_tag.draw(menu)
+        food_tag.draw(menu)
+        pop_tag.draw(menu)
 
-        if menu == 0:
-            food_button.set_text(display_number(food_click(pop), "high"))
-            food_button.draw()
-        elif menu == 1:
-            pop_cost.set_text(population_cost(pop))
-            pop_cost.draw()
-            pop_plus.draw()
+        food_button.set_text(display_number(food_click(pop), "high"))
+        food_button.draw(menu)
+        harvester_tag.set_text(display_number(harvester))
+        harvester_tag.draw(menu)
+        harvester_plus.draw(menu)
+        harvester_minus.draw(menu)
+
+        pop_cost.set_text(population_cost(pop))
+        pop_cost.draw(menu)
+        pop_plus.draw(menu)
         
         with open('savegame.txt', 'w') as file:
-            file.write(f"{pop}$${food}")
+            file.write(f"{pop}$${food}$${harvester}")
 
         pygame.display.update()
         clock.tick(time_delta)
