@@ -38,6 +38,9 @@ class Game:
     def population_cost(self) -> float:
         return round(((self.population + 1) * 50) ** 1.1)
 
+    def format_population_cost(self):
+        return utils.display_number(self.population_cost())
+
     def increment_food(self, dry_run = False) -> float:
         value = 10 + self.harvester ** 1.5
         if not dry_run:

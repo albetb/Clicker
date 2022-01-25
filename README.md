@@ -1,3 +1,3 @@
 Simple idle game
 
- ~ by Albetb with ❤
+ ~ by Albetb e Giuseongit with ❤

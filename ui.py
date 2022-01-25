@@ -3,13 +3,12 @@ import assets
 import utils
 from engine import GameStats as stats
 
-pygame.init()
-
 class Ui:
     EXPLORE = 0
     CITY = 1
 
     def __init__(self) -> None:
+        pygame.init()
         self.clock = pygame.time.Clock()
         self.fps = 10
 
@@ -24,7 +23,6 @@ class Ui:
         self.running = False
 
         self.current_menu = self.EXPLORE
-
 
     def init_images(self):
         self.background = assets.Image(assets.BACKGROUND_EXPLORE, 0, 0, self.display_width, self.display_height)
@@ -49,7 +47,7 @@ class Ui:
     def run(self):
         self.running = True
         while self.running:
-            # update state
+            # Update state
             self.loop()
 
             self.draw_menu()
@@ -67,7 +65,6 @@ class Ui:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False
-                pass
 
             if event.type == pygame.MOUSEBUTTONUP:
 
@@ -115,7 +112,6 @@ class Ui:
         self.explore_menu.draw(self.current_menu, self.display)
         self.city_menu.draw(self.current_menu, self.display)
 
-
     def update_counters(self):
         self.pop_tag.set_text(self.game.get_formatted_stats(stats.population))
         self.food_tag.set_text(self.game.get_formatted_stats(stats.food))
@@ -143,6 +139,6 @@ class Ui:
         self.lumber_plus.draw(self.current_menu, self.display)
         self.lumber_minus.draw(self.current_menu, self.display)
 
-        self.pop_cost.set_text(self.game.population_cost())
+        self.pop_cost.set_text(self.game.format_population_cost())
         self.pop_cost.draw(self.current_menu, self.display)
         self.pop_plus.draw(self.current_menu, self.display)
