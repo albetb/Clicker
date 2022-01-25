@@ -5,18 +5,10 @@ import pygame # pip install pygame
 import os
 
 pygame.init()
-GAME_VERSION = "0.0.1b"
+GAME_VERSION = "0.0.4"
 
 clock = pygame.time.Clock()
-fps = 10 # Frame per second
-
-white = (255, 255, 255)
-black = (0, 0, 0)
-grey = (128, 128, 128)
-light_grey = (224, 224, 224)
-light_blue = (173, 216, 230)
-grey = (128, 128, 128)
-blue = (0, 100, 250)
+FPS = 10 # Frame per second
 
 display_width = 800
 display_height = 600
@@ -106,7 +98,7 @@ def text(text, color, x, y, fsize):
  
 def main_loop():
     global clock
-    global fps
+    global FPS
     
     food = 0
     wood = 0
@@ -215,8 +207,8 @@ def main_loop():
         pop_tag.set_text(display_number(pop))
         food_tag.set_text(display_number(food))
         wood_tag.set_text(display_number(wood))
-        food_prod_tag.set_text(f"{display_number(production(harvester) * 10 - 0.05 * pop, 'high')}/s")
-        wood_prod_tag.set_text(f"{display_number(production(lumber) * 10 * 0.8, 'high')}/s")
+        food_prod_tag.set_text(f"{display_number((production(harvester) - 0.005 * pop) * FPS, 'high')}/s")
+        wood_prod_tag.set_text(f"{display_number(production(lumber) * FPS * 0.8, 'high')}/s")
 
         food_prod_tag.draw(menu)
         food_tag.draw(menu)
@@ -245,7 +237,7 @@ def main_loop():
             file.write(f"{pop}$${food}$${harvester}$${wood}$${lumber}")
 
         pygame.display.update()
-        clock.tick(fps)
+        clock.tick(FPS)
 
 main_loop()
 pygame.quit()
