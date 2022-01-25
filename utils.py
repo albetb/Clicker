@@ -14,7 +14,7 @@ def scale_image(
     dest_surface: Optional[pygame.surface.Surface] = None,
 ):
     if dest_surface is not None:
-        return pygame.transform.scale(surface, size, dest_surface)
+         return pygame.transform.scale(surface, size, dest_surface)
     return pygame.transform.scale(surface, size)
 
 def load_saved_game_or_init_new_game() -> engine.Game:

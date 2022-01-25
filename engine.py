@@ -64,26 +64,27 @@ class Game:
     def serialize(self) -> str:
         return f"{self.population}$${self.food}$${self.harvester}$${self.wood}$${self.lumber}"
 
-    def increment_population(self):
-        if self.food >= self.population_cost():
-            self.food -= self.population_cost()
-            self.population += 1
+    def increment_population(self, num = 1):
+        for _ in range(num):
+            if self.food >= self.population_cost():
+                self.food -= self.population_cost()
+                self.population += 1
 
-    def increment_harvester(self):
-        if self.population > self.harvester + self.lumber:
-            self.harvester += 1
+    def increment_harvester(self, num = 1):
+        if self.population >= self.harvester + self.lumber + num:
+            self.harvester += num
 
-    def decrement_harvester(self):
-        if self.harvester > 0:
-            self.harvester -= 1
+    def decrement_harvester(self, num = 1):
+        if self.harvester - num >= 0:
+            self.harvester -= num
 
-    def increment_lumber(self):
-        if self.population > self.harvester + self.lumber:
-            self.lumber += 1
+    def increment_lumber(self, num = 1):
+        if self.population >= self.harvester + self.lumber + num:
+            self.lumber += num
 
-    def decrement_lumber(self):
-        if self.lumber > 0:
-            self.lumber -= 1
+    def decrement_lumber(self, num = 1):
+        if self.lumber - num >= 0:
+            self.lumber -= num
 
     def get_formatted_stats(self, stat: GameStats, precision = "low") -> str:
         if stat == GameStats.harvester:

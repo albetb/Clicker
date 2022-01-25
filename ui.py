@@ -12,8 +12,8 @@ class Ui:
         self.clock = pygame.time.Clock()
         self.fps = 10
 
-        self.display_width = 800
-        self.display_height = 600
+        self.display_width = 1024
+        self.display_height = self.display_width * 3 // 4
         self.display = pygame.display.set_mode((self.display_width, self.display_height))
         pygame.display.set_caption("Clicker")
 
@@ -23,26 +23,50 @@ class Ui:
         self.running = False
 
         self.current_menu = self.EXPLORE
+        self.press_time = 0 # Time when a button pressing started
 
     def init_images(self):
         self.background = assets.Image(assets.BACKGROUND_EXPLORE, 0, 0, self.display_width, self.display_height)
+        # Lambdas who calculate button heigth given width
+        large_h = lambda large_w: large_w * 100 // 275
+        tag_h = lambda large_w: large_w * 100 // 190
+        square_h = lambda square_w: square_w * 109 // 100
+        round_h = lambda round_w: round_w * 103 // 100
+        arrow_h = lambda round_w: round_w * 100 // 80
 
-        self.food_button = assets.Image(assets.BUTTON_FOOD, 291, 200, 218, 200, 0, 0.5, 0.68, 0)
-        self.explore_menu = assets.Image(assets.BUTTON_LARGE, 430, 480, 275, 100, "Explore")
-        self.city_menu = assets.Image(assets.BUTTON_LARGE, 90, 480, 275, 100, "City")
-        self.food_tag = assets.Image(assets.TEXTBOX_FOOD, 20, 20, 190, 100, 0, 0.4)
-        self.food_prod_tag = assets.Image(assets.BUTTON_LARGE, 110, 30, 240, 80, 0, 0.68)
-        self.wood_tag = assets.Image(assets.WOOD_TAG, 380, 20, 190, 100, 0, 0.4)
-        self.wood_prod_tag = assets.Image(assets.BUTTON_LARGE, 460, 30, 240, 80, 0, 0.68)
-        self.pop_tag = assets.Image(assets.POP_TAG, 20, 135, 190, 100, 0, 0.4)
-        self.pop_plus = assets.Image(assets.BUTTON_ROUND_PLUS, 248, 139, 68, 68, menu=1)
-        self.pop_cost = assets.Image(assets.BUTTON_LARGE_FOOD, 230, 130, 275, 100, 0, 0.52, menu=1)
-        self.harvester_tag = assets.Image(assets.BUTTON_LARGE_HARVESTER, 90, 250, 275, 100, 0, 0.50, menu=1)
-        self.harvester_plus = assets.Image(assets.RIGHT_BUTTON_PLUS, 475, 250, 80, 100, menu=1)
-        self.harvester_minus = assets.Image(assets.LEFT_BUTTON_MINUS, 380, 250, 80, 100, menu=1)
-        self.lumber_tag = assets.Image(assets.BUTTON_LARGE_LUMBERER, 90, 365, 275, 100, 0, 0.50, menu=1)
-        self.lumber_plus = assets.Image(assets.RIGHT_BUTTON_PLUS, 475, 365, 80, 100, menu=1)
-        self.lumber_minus = assets.Image(assets.LEFT_BUTTON_MINUS, 380, 365, 80, 100, menu=1)
+        # Central button, give food when clicked
+        food_w = 200
+        self.food_button = assets.Image(assets.BUTTON_FOOD, (self.display_width - food_w) / 2, (self.display_height - square_h(food_w)) / 2, square_h(food_w), food_w, 0, 0.5, 0.68, 0)
+
+        # Bottom menu button
+        menu_w = 275
+        self.city_menu = assets.Image(assets.BUTTON_LARGE, (self.display_width - 2 * menu_w) // 3, self.display_height - large_h(menu_w) - 20, menu_w, large_h(menu_w), "City")
+        self.explore_menu = assets.Image(assets.BUTTON_LARGE, (self.display_width - 2 * menu_w) * 2 // 3 + menu_w, self.display_height - large_h(menu_w) - 20, menu_w, large_h(menu_w), "Explore")
+        
+        # Tag with current resources
+        resource_w = 190
+        production_w = resource_w * 0.9
+        self.food_tag = assets.Image(assets.TEXTBOX_FOOD, (self.display_width - 3 * 1.5 * resource_w) // 4, 20, resource_w, tag_h(resource_w), 0, 0.4)
+        self.food_prod_tag = assets.Image(assets.BUTTON_LARGE, (self.display_width - 3 * 1.5 * resource_w) // 4 + resource_w * 0.7, 30, production_w, large_h(production_w), 0, 0.65, 0.55)
+        self.food_prod_tag.set_text_size(22)
+        self.wood_tag = assets.Image(assets.WOOD_TAG, (self.display_width - 3 * 1.5 * resource_w) * 2 // 4 + 1.5 * resource_w, 20, resource_w, tag_h(resource_w), 0, 0.4)
+        self.wood_prod_tag = assets.Image(assets.BUTTON_LARGE, (self.display_width - 3 * 1.5 * resource_w) * 2 // 4 + 1.5 * resource_w + resource_w * 0.7, 30, production_w, large_h(production_w), 0, 0.65, 0.55)
+        self.wood_prod_tag.set_text_size(22)
+        self.pop_tag = assets.Image(assets.POP_TAG, (self.display_width - 3 * 1.5 * resource_w) // 4, 20 + 15 + tag_h(resource_w), resource_w, tag_h(resource_w), 0, 0.4)
+
+        # Buy population button and cost
+        arrow_w = 80
+        self.pop_plus = assets.Image(assets.RIGHT_BUTTON_PLUS, (self.display_width - 3 * 1.5 * resource_w) // 4 + resource_w + 15 + menu_w * 0.85 + 7, 20 + 15 + 9 + tag_h(resource_w), arrow_w * 0.7, arrow_h(arrow_w * 0.7), menu=1)
+        self.pop_cost = assets.Image(assets.BUTTON_LARGE_FOOD, (self.display_width - 3 * 1.5 * resource_w) // 4 + resource_w + 15, 20 + 15 + tag_h(resource_w), menu_w * 0.85, large_h(menu_w * 0.85), 0, 0.4, menu=1)
+
+        # Worker menu
+        worker_x, worker_y = 90, 280
+        self.harvester_tag = assets.Image(assets.BUTTON_LARGE_HARVESTER, worker_x, worker_y, menu_w, large_h(menu_w), 0, 0.4, menu=1)
+        self.harvester_minus = assets.Image(assets.LEFT_BUTTON_MINUS, worker_x + menu_w + 8, worker_y, arrow_w, arrow_h(arrow_w), menu=1)
+        self.harvester_plus = assets.Image(assets.RIGHT_BUTTON_PLUS, worker_x + menu_w + arrow_w + 8 * 2, worker_y, arrow_w, arrow_h(arrow_w), menu=1)
+        self.lumber_tag = assets.Image(assets.BUTTON_LARGE_LUMBERER, worker_x, worker_y + large_h(menu_w) + 10, menu_w, large_h(menu_w), 0, 0.4, menu=1)
+        self.lumber_minus = assets.Image(assets.LEFT_BUTTON_MINUS, worker_x + menu_w + 8, worker_y + large_h(menu_w) + 10, arrow_w, arrow_h(arrow_w), menu=1)
+        self.lumber_plus = assets.Image(assets.RIGHT_BUTTON_PLUS, worker_x + menu_w + arrow_w + 8 * 2, worker_y + large_h(menu_w) + 10, arrow_w, arrow_h(arrow_w), menu=1)
 
     def run(self):
         self.running = True
@@ -61,37 +85,59 @@ class Ui:
 
     def loop(self):
         self.game.autominer()
+        mouse = pygame.mouse.get_pos()
+        
+        if self.press_time > 0: # Fast buy when long press button
+            if self.pop_plus.collide(mouse, self.current_menu):
+                self.game.increment_population(((pygame.time.get_ticks() - self.press_time) // 1000) ** 2)
+
+            if self.harvester_plus.collide(mouse, self.current_menu):
+                self.game.increment_harvester(((pygame.time.get_ticks() - self.press_time) // 1000) ** 2)
+
+            if self.harvester_minus.collide(mouse, self.current_menu):
+                self.game.decrement_harvester(((pygame.time.get_ticks() - self.press_time) // 1000) ** 2)
+
+            if self.lumber_plus.collide(mouse, self.current_menu):
+                self.game.increment_lumber(((pygame.time.get_ticks() - self.press_time) // 1000) ** 2)
+
+            if self.lumber_minus.collide(mouse, self.current_menu):
+                self.game.decrement_lumber(((pygame.time.get_ticks() - self.press_time) // 1000) ** 2)
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False
 
+            if event.type == pygame.MOUSEBUTTONDOWN:
+
+                if self.press_time == 0: # Save time when start pressing button
+                    self.press_time = pygame.time.get_ticks()
+
             if event.type == pygame.MOUSEBUTTONUP:
 
-                mopos = pygame.mouse.get_pos()
+                self.press_time = 0 # Reset time when relase button
 
-                if self.pop_plus.collide(mopos, self.current_menu):
+                if self.pop_plus.collide(mouse, self.current_menu):
                     self.game.increment_population()
 
-                if self.food_button.collide(mopos, self.current_menu):
+                if self.food_button.collide(mouse, self.current_menu):
                     self.game.increment_food()
 
-                if self.explore_menu.collide(mopos, self.current_menu):
+                if self.explore_menu.collide(mouse, self.current_menu):
                     self.current_menu = self.EXPLORE
                     
-                if self.city_menu.collide(mopos, self.current_menu):
+                if self.city_menu.collide(mouse, self.current_menu):
                     self.current_menu = self.CITY
 
-                if self.harvester_plus.collide(mopos, self.current_menu):
+                if self.harvester_plus.collide(mouse, self.current_menu):
                     self.game.increment_harvester()
 
-                if self.harvester_minus.collide(mopos, self.current_menu):
+                if self.harvester_minus.collide(mouse, self.current_menu):
                     self.game.decrement_harvester()
 
-                if self.lumber_plus.collide(mopos, self.current_menu):
+                if self.lumber_plus.collide(mouse, self.current_menu):
                     self.game.increment_lumber()
 
-                if self.lumber_minus.collide(mopos, self.current_menu):
+                if self.lumber_minus.collide(mouse, self.current_menu):
                     self.game.decrement_lumber()
 
                 if self.game.food >= 2147483647:

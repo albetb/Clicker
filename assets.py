@@ -1,4 +1,3 @@
-
 import os
 import utils
 
@@ -18,7 +17,6 @@ RIGHT_BUTTON_PLUS = os.path.join(ASSET_DIR, "rightbuttonplus.png")
 TEXTBOX_FOOD = os.path.join(ASSET_DIR, "textboxfood.png")
 WOOD_TAG = os.path.join(ASSET_DIR, "woodtag.png")
 
-
 class Image:
     def __init__(self, path, x, y, w, h, text = "", textx = 0.5, texty = 0.5, menu = -1):
         self.path = path # Image relative path
@@ -31,17 +29,21 @@ class Image:
         self.textx = textx # X positioning of text [0, 1], 1 is 100% right
         self.texty = texty # Y positioning of text [0, 1], 1 is 100% down
         self.menu = menu # Set in what case image is displayed, -1 everytime
+        self.textSize = 30
 
         self.change(self.path)
         self.set_text(text)
 
-    def set_text(self, text, size = 30, color = (0, 0, 0)):
+    def set_text(self, text, color = (0, 0, 0)):
         if text != "":
-            font = utils.Font('freesansbold.ttf', size)
+            font = utils.Font('freesansbold.ttf', self.textSize)
             self.text = font.render(str(text), True, color)
             self.textRect = self.text.get_rect()
             avg = lambda a, l: (2 * a + l) / 2
-            self.textRect.center = (avg(self.x, self.w) - (0.5 - self.textx) * self.w, avg(self.y, self.h) - (size / 6) - (0.5 - self.texty) * self.h)
+            self.textRect.center = (avg(self.x, self.w) - (0.5 - self.textx) * self.w, avg(self.y, self.h) - (self.textSize / 6) - (0.5 - self.texty) * self.h)
+    
+    def set_text_size(self, textSize):
+        self.textSize = textSize
 
     def change(self, path):
         picture = utils.load_image(path)
