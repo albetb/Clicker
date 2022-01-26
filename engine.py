@@ -75,6 +75,20 @@ class Game:
     def serialize(self) -> str:
         return f"{self.population}$${self.food}$${self.harvester}$${self.wood}$${self.lumber}$${self.house}"
 
+    @classmethod
+    def deserialize(cls, data: str):
+        if len(data.split("$$")) < 6:
+            raise RuntimeError("")
+        if len(data) != 0:
+            pop = int(data.split("$$")[0])
+            food = float(data.split("$$")[1])
+            wood = float(data.split("$$")[3])
+            harvester = int(data.split("$$")[2])
+            lumber = int(data.split("$$")[4])
+            house = int(data.split("$$")[5])
+            return cls(pop, food, wood, harvester, lumber, house)
+        return cls(0, 0, 0, 0, 0, 0)
+
     def increment_population(self, num = 1):
         for _ in range(num):
             if self.food >= self.population_cost() and self.population < self.population_limit():

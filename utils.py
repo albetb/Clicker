@@ -21,18 +21,8 @@ def load_saved_game_or_init_new_game() -> engine.Game:
     try:
         with open('savegame.txt', 'r') as file:
             data = file.read()
-            if len(data.split("$$")) < 6:
-                raise RuntimeError("")
-            if len(data) != 0:
-                pop = int(data.split("$$")[0])
-                food = float(data.split("$$")[1])
-                wood = float(data.split("$$")[3])
-                harvester = int(data.split("$$")[2])
-                lumber = int(data.split("$$")[4])
-                house = int(data.split("$$")[5])
-                return engine.Game(pop, food, wood, harvester, lumber, house)
-            return engine.Game(0, 0, 0, 0, 0, 0)
-    except:
+            return engine.Game.deserialize(data)
+    except (FileNotFoundError, RuntimeError):
         return engine.Game(0, 0, 0, 0, 0, 0)
 
 def save_game(game: engine.Game):
