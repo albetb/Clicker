@@ -72,7 +72,6 @@ class Ui:
         self.house_cost = assets.Image(assets.BUTTON_LARGE_WOOD, worker_x + arrow_w * 1.3 + 8, worker_y, menu_w, large_h(menu_w), 0, 0.4, menu=2)
         self.house_plus = assets.Image(assets.RIGHT_BUTTON_PLUS, worker_x + arrow_w * 1.3 + menu_w + 2*  8, worker_y, arrow_w, arrow_h(arrow_w), menu=2)
 
-
     def run(self):
         self.running = True
         while self.running:
@@ -154,26 +153,22 @@ class Ui:
                 if self.house_plus.collide(mouse, self.current_menu):
                     self.game.increment_house()
 
-                if self.game.food >= 2147483647:
+                if self.game.food >= 2_147_483_647:
                     print("You Beat the game")
                     self.running = False
 
     def draw_menu(self):
-        if self.current_menu == self.EXPLORE:
-            self.background.change(assets.BACKGROUND_EXPLORE)
-            self.city_menu.change(assets.BUTTON_LARGE)
-            self.explore_menu.change(assets.BUTTON_LARGE_SELECTED)
-            self.manage_menu.change(assets.BUTTON_LARGE)
-        elif self.current_menu == self.CITY:
-            self.background.change(assets.BACKGROUND_CITY)
-            self.city_menu.change(assets.BUTTON_LARGE_SELECTED)
-            self.explore_menu.change(assets.BUTTON_LARGE)
-            self.manage_menu.change(assets.BUTTON_LARGE)
-        elif self.current_menu == self.MANAGE:
-            self.background.change(assets.BACKGROUND_MANAGE)
-            self.city_menu.change(assets.BUTTON_LARGE)
-            self.explore_menu.change(assets.BUTTON_LARGE)
-            self.manage_menu.change(assets.BUTTON_LARGE_SELECTED)
+
+        background = {
+            self.EXPLORE: assets.BACKGROUND_EXPLORE,
+            self.CITY: assets.BACKGROUND_CITY,
+            self.MANAGE: assets.BACKGROUND_MANAGE,
+        }
+        self.background.change(background[self.current_menu])
+
+        self.city_menu.change(assets.BUTTON_LARGE_SELECTED if self.current_menu == self.CITY else assets.BUTTON_LARGE)
+        self.explore_menu.change(assets.BUTTON_LARGE_SELECTED if self.current_menu == self.EXPLORE else assets.BUTTON_LARGE)
+        self.manage_menu.change(assets.BUTTON_LARGE_SELECTED if self.current_menu == self.MANAGE else assets.BUTTON_LARGE)
         
         self.background.draw(self.current_menu, self.display)
         self.city_menu.draw(self.current_menu, self.display)
@@ -196,23 +191,27 @@ class Ui:
         self.pop_tag.draw(self.current_menu, self.display)
 
     def update_buttons(self):
+        # Explore menu #
+        ## Central food+ button
         self.food_button.set_text(self.game.get_earn_per_click())
         self.food_button.draw(self.current_menu, self.display)
-
+        # Manage menu #
+        ## Harvester buttons
         self.harvester_tag.set_text(self.game.format_harvester())
         self.harvester_tag.draw(self.current_menu, self.display)
         self.harvester_plus.draw(self.current_menu, self.display)
         self.harvester_minus.draw(self.current_menu, self.display)
-
+        ## Lumber buttons
         self.lumber_tag.set_text(self.game.format_lumber())
         self.lumber_tag.draw(self.current_menu, self.display)
         self.lumber_plus.draw(self.current_menu, self.display)
         self.lumber_minus.draw(self.current_menu, self.display)
-
+        ## Population+ button and cost
         self.pop_cost.set_text(self.game.format_population_cost())
         self.pop_cost.draw(self.current_menu, self.display)
         self.pop_plus.draw(self.current_menu, self.display)
-
+        # City menu #
+        ## House button and cost
         self.house_tag.set_text(self.game.house)
         self.house_cost.set_text(self.game.house_cost())
         self.house_tag.draw(self.current_menu, self.display)
