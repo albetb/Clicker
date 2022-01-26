@@ -1,5 +1,6 @@
 from enum import Enum, unique
 import utils
+import json
 
 @unique
 class GameStats(str, Enum):
@@ -29,18 +30,18 @@ class Game:
 
         return 0.05 * (data ** 1.05) * (1 + (data // 10) * 0.5)
 
-    def harvester_production_per_second(self, clocks_per_second: int):
+    def harvester_production_per_second(self, clocks_per_second: int) -> str:
         value = (self.production(GameStats.harvester) - 0.005 * self.population) * clocks_per_second
         return utils.display_number(value, "high") + "/s"
 
-    def lumber_production_per_second(self, clocks_per_second: int):
+    def lumber_production_per_second(self, clocks_per_second: int) -> str:
         value = self.production(GameStats.lumber) * clocks_per_second * 0.8
         return utils.display_number(value, "high") + "/s"
 
     def population_cost(self) -> float:
         return round(((self.population + 1) * 50) ** 1.1)
 
-    def format_population_cost(self):
+    def format_population_cost(self) -> str:
         return utils.display_number(self.population_cost())
 
     def house_cost(self) -> float:
@@ -52,16 +53,19 @@ class Game:
     def population_limit(self) -> float:
         return int(10 * (1 + self.house))
 
+    def format_population_limit(self) -> float:
+        return utils.display_number(self.population_limit())
+
     def increment_food(self, dry_run = False) -> float:
         value = 10 + self.harvester ** 1.5
         if not dry_run:
             self.food += value
         return value
 
-    def format_harvester(self):
+    def format_harvester(self) -> str:
         return utils.display_number(self.harvester)
 
-    def format_lumber(self):
+    def format_lumber(self) -> str:
         return utils.display_number(self.lumber)
 
     def get_earn_per_click(self) -> str:
@@ -73,20 +77,35 @@ class Game:
         self.wood = round(self.wood + 0.8 * self.production(GameStats.lumber), 3)
 
     def serialize(self) -> str:
-        return f"{self.population}$${self.food}$${self.harvester}$${self.wood}$${self.lumber}$${self.house}"
+        data = {
+            "population": self.population,
+            "resource": {
+                "food": self.food,
+                "wood": self.wood
+                },
+            "building": {
+                "house": self.house
+                },
+            "occupation": {
+                "harvester": self.harvester,
+                "lumber": self.lumber
+                }
+            }
+        return data
 
     @classmethod
     def deserialize(cls, data: str):
-        if len(data.split("$$")) < 6:
-            raise RuntimeError("")
-        if len(data) != 0:
-            pop = int(data.split("$$")[0])
-            food = float(data.split("$$")[1])
-            wood = float(data.split("$$")[3])
-            harvester = int(data.split("$$")[2])
-            lumber = int(data.split("$$")[4])
-            house = int(data.split("$$")[5])
-            return cls(pop, food, wood, harvester, lumber, house)
+        try:
+            if len(data) != 0:
+                population = data["population"]
+                food = data["resource"]["food"]
+                wood = data["resource"]["wood"]
+                harvester = data["occupation"]["harvester"]
+                lumber = data["occupation"]["lumber"]
+                house = data["building"]["house"]
+                return cls(population, food, wood, harvester, lumber, house)
+        except:
+            pass
         return cls(0, 0, 0, 0, 0, 0)
 
     def increment_population(self, num = 1):
@@ -96,26 +115,26 @@ class Game:
                 self.population += 1
 
     def increment_harvester(self, num = 1):
-        if self.population >= self.harvester + self.lumber + num:
-            self.harvester += num
+        for _ in range(num):
+            self.harvester += self.population > self.harvester + self.lumber
 
     def decrement_harvester(self, num = 1):
-        if self.harvester - num >= 0:
-            self.harvester -= num
+        for _ in range(num):
+            self.harvester -= self.harvester > 0
 
     def increment_lumber(self, num = 1):
-        if self.population >= self.harvester + self.lumber + num:
-            self.lumber += num
+        for _ in range(num):
+            self.lumber += self.population > self.harvester + self.lumber
+
+    def decrement_lumber(self, num = 1):
+        for _ in range(num):
+            self.lumber -= self.lumber > 0
 
     def increment_house(self, num = 1):
         for _ in range(num):
             if self.wood >= self.house_cost():
                 self.wood -= self.house_cost()
                 self.house += 1
-
-    def decrement_lumber(self, num = 1):
-        if self.lumber - num >= 0:
-            self.lumber -= num
 
     def get_formatted_stats(self, stat: GameStats, precision = "low") -> str:
         if stat == GameStats.harvester:

@@ -1,6 +1,7 @@
 import pygame
 from typing import Optional, Any
 import engine
+import json
 
 class Font(pygame.font.Font):
     pass
@@ -17,17 +18,17 @@ def scale_image(
          return pygame.transform.scale(surface, size, dest_surface)
     return pygame.transform.scale(surface, size)
 
-def load_saved_game_or_init_new_game() -> engine.Game:
+def load_game() -> engine.Game:
     try:
         with open('savegame.txt', 'r') as file:
-            data = file.read()
+            data = json.load(file)
             return engine.Game.deserialize(data)
-    except (FileNotFoundError, RuntimeError):
+    except:
         return engine.Game(0, 0, 0, 0, 0, 0)
 
 def save_game(game: engine.Game):
     with open('savegame.txt', 'w+') as file:
-        file.write(game.serialize())
+        file.write(json.dumps(game.serialize()))
 
 def display_number(num, precision = "low") -> str:
     if num < 10 ** 3 and (precision == "low" or num == round(num)):
@@ -35,10 +36,10 @@ def display_number(num, precision = "low") -> str:
     elif num < 10 ** 3 and precision == "high":
         return f"{round(num, 2)}"
     elif num < 10 ** 6:
-        return f"{round(num / (10 ** 3), 2)} k"
+        return f"{round(num / (10 ** 3), 2)}k"
     elif num < 10 ** 9:
-        return f"{round(num / (10 ** 6), 2)} M"
+        return f"{round(num / (10 ** 6), 2)}M"
     elif num < 10 ** 12:
-        return f"{round(num / (10 ** 9), 2)} B"
+        return f"{round(num / (10 ** 9), 2)}B"
     elif num < 10 ** 15:
-        return f"{round(num / (10 ** 12), 2)} T"
+        return f"{round(num / (10 ** 12), 2)}T"

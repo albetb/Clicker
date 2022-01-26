@@ -1,25 +1,28 @@
 import os
 import utils
 
+# Name of button: shape_symbol_other.png
+
 ASSET_DIR = os.path.join(".", "asset")
 BACKGROUND_EXPLORE = os.path.join(ASSET_DIR, "background_explore.jpg")
 BACKGROUND_CITY = os.path.join(ASSET_DIR, "background_city.png")
 BACKGROUND_MANAGE = os.path.join(ASSET_DIR, "background_manage.png")
-BUTTON_FOOD = os.path.join(ASSET_DIR, "buttonfood.png")
-BUTTON_LARGE = os.path.join(ASSET_DIR, "button_large.png")
-BUTTON_SQUARE = os.path.join(ASSET_DIR, "button_square.png")
-HOUSE_TAG = os.path.join(ASSET_DIR, "house_tag.png")
-BUTTON_LARGE_SELECTED = os.path.join(ASSET_DIR, "button_large_selected.png")
-BUTTON_LARGE_FOOD = os.path.join(ASSET_DIR, "button_large_food.png")
-BUTTON_LARGE_WOOD = os.path.join(ASSET_DIR, "button_large_wood.png")
-BUTTON_LARGE_HARVESTER = os.path.join(ASSET_DIR, "button_large_harvester.png")
-BUTTON_LARGE_LUMBERER = os.path.join(ASSET_DIR, "button_large_lumberer.png")
-BUTTON_ROUND_PLUS = os.path.join(ASSET_DIR, "buttonroundplus.png")
-LEFT_BUTTON_MINUS = os.path.join(ASSET_DIR, "leftbuttonminus.png")
-POP_TAG = os.path.join(ASSET_DIR, "poptag.png")
-RIGHT_BUTTON_PLUS = os.path.join(ASSET_DIR, "rightbuttonplus.png")
-TEXTBOX_FOOD = os.path.join(ASSET_DIR, "textboxfood.png")
-WOOD_TAG = os.path.join(ASSET_DIR, "woodtag.png")
+
+SQUARE_PLUS_FOOD = os.path.join(ASSET_DIR, "square_plus_food.png")
+LARGE = os.path.join(ASSET_DIR, "large.png")
+SQUARE = os.path.join(ASSET_DIR, "square.png")
+SQUARE_HOUSE = os.path.join(ASSET_DIR, "square_house.png")
+LARGE_SELECTED = os.path.join(ASSET_DIR, "large_selected.png")
+LARGE_FOOD = os.path.join(ASSET_DIR, "large_food.png")
+LARGE_WOOD = os.path.join(ASSET_DIR, "large_wood.png")
+LARGE_HARVESTER = os.path.join(ASSET_DIR, "large_harvester.png")
+LARGE_LUMBERER = os.path.join(ASSET_DIR, "large_lumberer.png")
+ROUND_PLUS = os.path.join(ASSET_DIR, "round_plus.png")
+LEFT_ARROW_MINUS = os.path.join(ASSET_DIR, "left_arrow_minus.png")
+RIGHT_ARROW_PLUS = os.path.join(ASSET_DIR, "right_arrow_plus.png")
+TAG_POPULATION = os.path.join(ASSET_DIR, "tag_population.png")
+TAG_FOOD = os.path.join(ASSET_DIR, "tag_food.png")
+TAG_WOOD = os.path.join(ASSET_DIR, "tag_wood.png")
 
 class Image:
     def __init__(self, path, x, y, w, h, text = "", textx = 0.5, texty = 0.5, menu = -1):
