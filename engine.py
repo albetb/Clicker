@@ -8,14 +8,16 @@ class GameStats(str, Enum):
     harvester = "harvester"
     lumber = "lumber"
     population = "population"
+    house = "house"
 
 class Game:
-    def __init__(self, population: int, food: float, wood: float, harvester: int, lumber: int) -> None:
+    def __init__(self, population: int, food: float, wood: float, harvester: int, lumber: int, house: int) -> None:
         self.population = population
         self.food = food
         self.wood = wood
         self.harvester = harvester
         self.lumber = lumber
+        self.house = house
 
     def production(self, stat: GameStats) -> int:
         if stat == GameStats.harvester:
@@ -41,6 +43,15 @@ class Game:
     def format_population_cost(self):
         return utils.display_number(self.population_cost())
 
+    def house_cost(self) -> float:
+        return round(((self.house + 1) * 50) ** 1.2)
+    
+    def format_house_cost(self) -> float:
+        return utils.display_number(self.house_cost())
+
+    def population_limit(self) -> float:
+        return int(10 * (1 + self.house))
+
     def increment_food(self, dry_run = False) -> float:
         value = 10 + self.harvester ** 1.5
         if not dry_run:
@@ -62,11 +73,11 @@ class Game:
         self.wood = round(self.wood + 0.8 * self.production(GameStats.lumber), 3)
 
     def serialize(self) -> str:
-        return f"{self.population}$${self.food}$${self.harvester}$${self.wood}$${self.lumber}"
+        return f"{self.population}$${self.food}$${self.harvester}$${self.wood}$${self.lumber}$${self.house}"
 
     def increment_population(self, num = 1):
         for _ in range(num):
-            if self.food >= self.population_cost():
+            if self.food >= self.population_cost() and self.population < self.population_limit():
                 self.food -= self.population_cost()
                 self.population += 1
 
@@ -81,6 +92,12 @@ class Game:
     def increment_lumber(self, num = 1):
         if self.population >= self.harvester + self.lumber + num:
             self.lumber += num
+
+    def increment_house(self, num = 1):
+        for _ in range(num):
+            if self.wood >= self.house_cost():
+                self.wood -= self.house_cost()
+                self.house += 1
 
     def decrement_lumber(self, num = 1):
         if self.lumber - num >= 0:

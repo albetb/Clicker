@@ -4,10 +4,14 @@ import utils
 ASSET_DIR = os.path.join(".", "asset")
 BACKGROUND_EXPLORE = os.path.join(ASSET_DIR, "background_explore.jpg")
 BACKGROUND_CITY = os.path.join(ASSET_DIR, "background_city.png")
+BACKGROUND_MANAGE = os.path.join(ASSET_DIR, "background_manage.png")
 BUTTON_FOOD = os.path.join(ASSET_DIR, "buttonfood.png")
 BUTTON_LARGE = os.path.join(ASSET_DIR, "button_large.png")
+BUTTON_SQUARE = os.path.join(ASSET_DIR, "button_square.png")
+HOUSE_TAG = os.path.join(ASSET_DIR, "house_tag.png")
 BUTTON_LARGE_SELECTED = os.path.join(ASSET_DIR, "button_large_selected.png")
 BUTTON_LARGE_FOOD = os.path.join(ASSET_DIR, "button_large_food.png")
+BUTTON_LARGE_WOOD = os.path.join(ASSET_DIR, "button_large_wood.png")
 BUTTON_LARGE_HARVESTER = os.path.join(ASSET_DIR, "button_large_harvester.png")
 BUTTON_LARGE_LUMBERER = os.path.join(ASSET_DIR, "button_large_lumberer.png")
 BUTTON_ROUND_PLUS = os.path.join(ASSET_DIR, "buttonroundplus.png")
@@ -29,7 +33,7 @@ class Image:
         self.textx = textx # X positioning of text [0, 1], 1 is 100% right
         self.texty = texty # Y positioning of text [0, 1], 1 is 100% down
         self.menu = menu # Set in what case image is displayed, -1 everytime
-        self.textSize = 30
+        self.textSize = 25
 
         self.change(self.path)
         self.set_text(text)

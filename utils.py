@@ -21,7 +21,7 @@ def load_saved_game_or_init_new_game() -> engine.Game:
     try:
         with open('savegame.txt', 'r') as file:
             data = file.read()
-            if len(data.split("$$")) < 5:
+            if len(data.split("$$")) < 6:
                 raise RuntimeError("")
             if len(data) != 0:
                 pop = int(data.split("$$")[0])
@@ -29,10 +29,11 @@ def load_saved_game_or_init_new_game() -> engine.Game:
                 wood = float(data.split("$$")[3])
                 harvester = int(data.split("$$")[2])
                 lumber = int(data.split("$$")[4])
-                return engine.Game(pop, food, wood, harvester, lumber)
-            return engine.Game(0, 0, 0, 0, 0)
-    except FileNotFoundError:
-        return engine.Game(0, 0, 0, 0, 0)
+                house = int(data.split("$$")[5])
+                return engine.Game(pop, food, wood, harvester, lumber, house)
+            return engine.Game(0, 0, 0, 0, 0, 0)
+    except:
+        return engine.Game(0, 0, 0, 0, 0, 0)
 
 def save_game(game: engine.Game):
     with open('savegame.txt', 'w+') as file:
