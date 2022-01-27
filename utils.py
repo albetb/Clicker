@@ -7,8 +7,26 @@ import time
 class Font(pygame.font.Font):
     pass
 
+# --> Time <--
+
 def current_time():
     return time.strftime("%Y %m %d %H %M %S", time.localtime())
+
+def get_time(time_str):
+    time.strptime(time_str, "%Y %m %d %H %M %S")
+
+def get_future_time(seconds = 0, minutes = 0, hours = 0, starting_time = ""):
+    if starting_time == "":
+        starting_time = current_time()
+    time_delta = time.timedelta(hours = hours, minutes = minutes, seconds = seconds)
+    return starting_time + time_delta
+
+def get_time_delta(time1, time2 = ""):
+    if time2 == "":
+        time2 = current_time()
+    return time2 - time1
+
+# --> Image <--
 
 def load_image(path: str) -> pygame.surface.Surface:
     return pygame.image.load(path)
@@ -22,6 +40,8 @@ def scale_image(
          return pygame.transform.scale(surface, size, dest_surface)
     return pygame.transform.scale(surface, size)
 
+# --> Load/save game <--
+
 def load_game() -> engine.Game:
     try:
         with open('savegame.txt', 'r') as file:
@@ -33,6 +53,8 @@ def load_game() -> engine.Game:
 def save_game(game: engine.Game):
     with open('savegame.txt', 'w+') as file:
         file.write(json.dumps(game.serialize()))
+
+# --> Formatting <--
 
 def display_number(num, precision = "low") -> str:
     if num < 10 ** 3 and (precision == "low" or num == round(num)):
