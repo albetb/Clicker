@@ -1,6 +1,5 @@
 from enum import Enum, unique
 import utils
-import json
 
 @unique
 class GameStats(str, Enum):
@@ -12,13 +11,17 @@ class GameStats(str, Enum):
     house = "house"
 
 class Game:
-    def __init__(self, population: int, food: float, wood: float, harvester: int, lumber: int, house: int) -> None:
+    def __init__(self, population: int, food: float, wood: float, harvester: int, lumber: int, house: int, time: int) -> None:
         self.population = population
         self.food = food
         self.wood = wood
         self.harvester = harvester
         self.lumber = lumber
         self.house = house
+        self.time = time
+
+    def save_current_time(self):
+        self.time = utils.current_time()
 
     def production(self, stat: GameStats) -> int:
         if stat == GameStats.harvester:
@@ -89,7 +92,8 @@ class Game:
             "occupation": {
                 "harvester": self.harvester,
                 "lumber": self.lumber
-                }
+                },
+            "time": self.time
             }
         return data
 
@@ -103,10 +107,11 @@ class Game:
                 harvester = data["occupation"]["harvester"]
                 lumber = data["occupation"]["lumber"]
                 house = data["building"]["house"]
-                return cls(population, food, wood, harvester, lumber, house)
+                time = data["time"]
+                return cls(population, food, wood, harvester, lumber, house, time)
         except:
             pass
-        return cls(0, 0, 0, 0, 0, 0)
+        return cls(0, 0, 0, 0, 0, 0, 0)
 
     def increment_population(self, num = 1):
         for _ in range(num):

@@ -83,31 +83,22 @@ class Ui:
 
             pygame.display.update()
             self.clock.tick(self.fps)
+            self.game.save_current_time()
             utils.save_game(self.game)
         pygame.quit()
 
     def loop(self):
         self.game.autominer()
         mouse = pygame.mouse.get_pos()
-        
+
+        fast_buy = lambda collide: collide * (((pygame.time.get_ticks() - self.press_time) // 1000) ** 2)
         if self.press_time > 0: # Fast buy when long press button
-            if self.pop_plus.collide(mouse, self.current_menu):
-                self.game.increment_population(((pygame.time.get_ticks() - self.press_time) // 1000) ** 2)
-
-            if self.harvester_plus.collide(mouse, self.current_menu):
-                self.game.increment_harvester(((pygame.time.get_ticks() - self.press_time) // 1000) ** 2)
-
-            if self.harvester_minus.collide(mouse, self.current_menu):
-                self.game.decrement_harvester(((pygame.time.get_ticks() - self.press_time) // 1000) ** 2)
-
-            if self.lumber_plus.collide(mouse, self.current_menu):
-                self.game.increment_lumber(((pygame.time.get_ticks() - self.press_time) // 1000) ** 2)
-
-            if self.lumber_minus.collide(mouse, self.current_menu):
-                self.game.decrement_lumber(((pygame.time.get_ticks() - self.press_time) // 1000) ** 2)
-
-            if self.house_plus.collide(mouse, self.current_menu):
-                self.game.increment_house(((pygame.time.get_ticks() - self.press_time) // 1000) ** 2)
+            self.game.increment_population(fast_buy(self.pop_plus.collide(mouse, self.current_menu)))
+            self.game.increment_harvester(fast_buy(self.harvester_plus.collide(mouse, self.current_menu)))
+            self.game.decrement_harvester(fast_buy(self.harvester_minus.collide(mouse, self.current_menu)))
+            self.game.increment_lumber(fast_buy(self.lumber_plus.collide(mouse, self.current_menu)))
+            self.game.decrement_lumber(fast_buy(self.lumber_minus.collide(mouse, self.current_menu)))
+            self.game.increment_house(fast_buy(self.house_plus.collide(mouse, self.current_menu)))
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -120,14 +111,12 @@ class Ui:
 
             if event.type == pygame.MOUSEBUTTONUP:
 
-                self.press_time = 0 # Reset time when relase button
+                if pygame.time.get_ticks() - self.press_time > 1000:
+                    self.press_time = 0 # Reset time when relase button
+                    return
+                elif pygame.time.get_ticks() - self.press_time > 0:
+                    self.press_time = 0
 
-                if self.pop_plus.collide(mouse, self.current_menu):
-                    self.game.increment_population()
-
-                if self.food_button.collide(mouse, self.current_menu):
-                    self.game.increment_food()
-                
                 if self.manage_menu.collide(mouse, self.current_menu):
                     self.current_menu = self.MANAGE
 
@@ -137,20 +126,15 @@ class Ui:
                 if self.city_menu.collide(mouse, self.current_menu):
                     self.current_menu = self.CITY
 
-                if self.harvester_plus.collide(mouse, self.current_menu):
-                    self.game.increment_harvester()
-
-                if self.harvester_minus.collide(mouse, self.current_menu):
-                    self.game.decrement_harvester()
-
-                if self.lumber_plus.collide(mouse, self.current_menu):
-                    self.game.increment_lumber()
-
-                if self.lumber_minus.collide(mouse, self.current_menu):
-                    self.game.decrement_lumber()
-
-                if self.house_plus.collide(mouse, self.current_menu):
-                    self.game.increment_house()
+                if self.food_button.collide(mouse, self.current_menu):
+                    self.game.increment_food()
+                    
+                self.game.increment_population(self.pop_plus.collide(mouse, self.current_menu))
+                self.game.increment_harvester(self.harvester_plus.collide(mouse, self.current_menu))
+                self.game.decrement_harvester(self.harvester_minus.collide(mouse, self.current_menu))
+                self.game.increment_lumber(self.lumber_plus.collide(mouse, self.current_menu))
+                self.game.decrement_lumber(self.lumber_minus.collide(mouse, self.current_menu))
+                self.game.increment_house(self.house_plus.collide(mouse, self.current_menu))
 
                 if self.game.food >= 2_147_483_647:
                     print("You Beat the game")

@@ -2,9 +2,13 @@ import pygame
 from typing import Optional, Any
 import engine
 import json
+import time
 
 class Font(pygame.font.Font):
     pass
+
+def current_time():
+    return time.strftime("%Y %m %d %H %M %S", time.localtime())
 
 def load_image(path: str) -> pygame.surface.Surface:
     return pygame.image.load(path)

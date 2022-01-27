@@ -1,25 +1,28 @@
 import os
 import utils
 
-# Name of button: shape_symbol_other.png
-
 ASSET_DIR = os.path.join(".", "asset")
+# Name of button: shape_symbol_other.png
 BACKGROUND_EXPLORE = os.path.join(ASSET_DIR, "background_explore.jpg")
 BACKGROUND_CITY = os.path.join(ASSET_DIR, "background_city.png")
 BACKGROUND_MANAGE = os.path.join(ASSET_DIR, "background_manage.png")
 
 SQUARE_PLUS_FOOD = os.path.join(ASSET_DIR, "square_plus_food.png")
-LARGE = os.path.join(ASSET_DIR, "large.png")
 SQUARE = os.path.join(ASSET_DIR, "square.png")
 SQUARE_HOUSE = os.path.join(ASSET_DIR, "square_house.png")
+
+ROUND_PLUS = os.path.join(ASSET_DIR, "round_plus.png")
+
+LARGE = os.path.join(ASSET_DIR, "large.png")
 LARGE_SELECTED = os.path.join(ASSET_DIR, "large_selected.png")
 LARGE_FOOD = os.path.join(ASSET_DIR, "large_food.png")
 LARGE_WOOD = os.path.join(ASSET_DIR, "large_wood.png")
 LARGE_HARVESTER = os.path.join(ASSET_DIR, "large_harvester.png")
 LARGE_LUMBERER = os.path.join(ASSET_DIR, "large_lumberer.png")
-ROUND_PLUS = os.path.join(ASSET_DIR, "round_plus.png")
+
 LEFT_ARROW_MINUS = os.path.join(ASSET_DIR, "left_arrow_minus.png")
 RIGHT_ARROW_PLUS = os.path.join(ASSET_DIR, "right_arrow_plus.png")
+
 TAG_POPULATION = os.path.join(ASSET_DIR, "tag_population.png")
 TAG_FOOD = os.path.join(ASSET_DIR, "tag_food.png")
 TAG_WOOD = os.path.join(ASSET_DIR, "tag_wood.png")
