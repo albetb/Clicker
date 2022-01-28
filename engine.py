@@ -12,7 +12,7 @@ class GameStats(str, Enum):
     house = "house"
 
 class Game:
-    def __init__(self, population: int, food: float, wood: float, harvester: int, lumber: int, house: int, time: int) -> None:
+    def __init__(self, population: int = 0, food: float = 0, wood: float = 0, harvester: int = 0, lumber: int = 0, house: int = 0, time: str = "", event_list = "") -> None:
         self.population = population
         self.food = food
         self.wood = wood
@@ -20,6 +20,9 @@ class Game:
         self.lumber = lumber
         self.house = house
         self.time = time
+        self.event_list = events.EventList()
+        if event_list != "":
+            self.event_list.load_from_dict(event_list)
 
     def save_current_time(self):
         self.time = events.current_time()
@@ -81,7 +84,7 @@ class Game:
         self.wood = round(self.wood + 0.8 * self.production(GameStats.lumber), 3)
 
     def serialize(self) -> str:
-        data = {
+        return {
             "population": self.population,
             "resource": {
                 "food": self.food,
@@ -94,9 +97,9 @@ class Game:
                 "harvester": self.harvester,
                 "lumber": self.lumber
                 },
-            "time": self.time
+            "time": self.time,
+            "event_list": self.event_list.serialize_event_list()
             }
-        return data
 
     @classmethod
     def deserialize(cls, data: str):
@@ -109,10 +112,11 @@ class Game:
                 lumber = data["occupation"]["lumber"]
                 house = data["building"]["house"]
                 time = data["time"]
-                return cls(population, food, wood, harvester, lumber, house, time)
+                event_list = data["event_list"]
+                return cls(population, food, wood, harvester, lumber, house, time, event_list)
         except:
             pass
-        return cls(0, 0, 0, 0, 0, 0, 0)
+        return cls()
 
     def increment_population(self, num = 1):
         for _ in range(num):
@@ -155,3 +159,15 @@ class Game:
             data = self.population
 
         return utils.display_number(data, precision)
+
+    def manage_event(self):
+        if len(self.event_list.event_list) > 0:
+
+            if len(self.event_list.check_expired()) > 0:
+                for event in self.event_list.check_expired():
+                    if event.name == "WoodPlus":
+                        self.wood += event.counter
+                self.event_list.remove_expired()
+
+            if self.event_list.event_exist("WoodPlus"):
+                self.event_list.select_event("WoodPlus").counter += 5 + round(0.8 * self.production(GameStats.lumber), 3)

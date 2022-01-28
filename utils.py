@@ -18,7 +18,7 @@ def scale_image(
 ):
     if dest_surface is not None:
          return pygame.transform.scale(surface, size, dest_surface)
-    return pygame.transform.scale(surface, size)
+    return pygame.transform.scale(surface, (int(size[0]), int(size[1])))
 
 # --> Load/save game <--
 
@@ -28,7 +28,7 @@ def load_game() -> engine.Game:
             data = json.load(file)
             return engine.Game.deserialize(data)
     except:
-        return engine.Game(0, 0, 0, 0, 0, 0)
+        return engine.Game()
 
 def save_game(game: engine.Game):
     with open('savegame.txt', 'w+') as file:

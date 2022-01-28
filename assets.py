@@ -12,6 +12,7 @@ SQUARE = os.path.join(ASSET_DIR, "square.png")
 SQUARE_HOUSE = os.path.join(ASSET_DIR, "square_house.png")
 
 ROUND_PLUS = os.path.join(ASSET_DIR, "round_plus.png")
+ROUND_WOOD = os.path.join(ASSET_DIR, "round_wood.png")
 
 LARGE = os.path.join(ASSET_DIR, "large.png")
 LARGE_SELECTED = os.path.join(ASSET_DIR, "large_selected.png")
