@@ -188,15 +188,18 @@ class Ui:
 
     def update_buttons(self):
         # Explore menu #
-        ## Central food+ button
-        self.food_button.set_text(self.game.get_earn_per_click())
-        self.food_button.draw(self.current_menu, self.display)
         ## Wood+ button and timer
         #self.food_button.set_text(self.game.get_earn_per_click())
         if self.game.event_list.event_exist("WoodPlus"):
             self.wood_timer.set_text(events.format_time_delta(self.game.event_list.select_event("WoodPlus").lasting_time()))
             self.wood_timer.draw(self.current_menu, self.display)
+            self.food_button.change(assets.SQUARE_PLUS_FOOD_DISABLED)
+        else:
+            self.food_button.change(assets.SQUARE_PLUS_FOOD)
         self.wood_button.draw(self.current_menu, self.display)
+        ## Central food+ button
+        self.food_button.set_text(self.game.get_earn_per_click())
+        self.food_button.draw(self.current_menu, self.display)
         # Manage menu #
         ## Harvester buttons
         self.harvester_tag.set_text(self.game.format_harvester())

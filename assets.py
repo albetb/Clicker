@@ -8,6 +8,7 @@ BACKGROUND_CITY = os.path.join(ASSET_DIR, "background_city.png")
 BACKGROUND_MANAGE = os.path.join(ASSET_DIR, "background_manage.png")
 
 SQUARE_PLUS_FOOD = os.path.join(ASSET_DIR, "square_plus_food.png")
+SQUARE_PLUS_FOOD_DISABLED = os.path.join(ASSET_DIR, "square_plus_food_disabled.png")
 SQUARE = os.path.join(ASSET_DIR, "square.png")
 SQUARE_HOUSE = os.path.join(ASSET_DIR, "square_house.png")
 
