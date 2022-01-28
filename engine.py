@@ -1,5 +1,6 @@
 from enum import Enum, unique
 import utils
+import events
 
 @unique
 class GameStats(str, Enum):
@@ -21,7 +22,7 @@ class Game:
         self.time = time
 
     def save_current_time(self):
-        self.time = utils.current_time()
+        self.time = events.current_time()
 
     def production(self, stat: GameStats) -> int:
         if stat == GameStats.harvester:

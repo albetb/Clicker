@@ -148,14 +148,15 @@ class Ui:
             self.MANAGE: assets.BACKGROUND_MANAGE,
         }
         self.background.change(background[self.current_menu])
+        self.background.draw(self.current_menu, self.display)
 
         self.city_menu.change(assets.LARGE_SELECTED if self.current_menu == self.CITY else assets.LARGE)
-        self.explore_menu.change(assets.LARGE_SELECTED if self.current_menu == self.EXPLORE else assets.LARGE)
-        self.manage_menu.change(assets.LARGE_SELECTED if self.current_menu == self.MANAGE else assets.LARGE)
-        
-        self.background.draw(self.current_menu, self.display)
         self.city_menu.draw(self.current_menu, self.display)
+        
+        self.explore_menu.change(assets.LARGE_SELECTED if self.current_menu == self.EXPLORE else assets.LARGE)
         self.explore_menu.draw(self.current_menu, self.display)
+
+        self.manage_menu.change(assets.LARGE_SELECTED if self.current_menu == self.MANAGE else assets.LARGE)
         self.manage_menu.draw(self.current_menu, self.display)
 
     def update_counters(self):

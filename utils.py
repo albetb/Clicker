@@ -2,29 +2,9 @@ import pygame
 from typing import Optional, Any
 import engine
 import json
-import time
 
 class Font(pygame.font.Font):
     pass
-
-# --> Time <--
-
-def current_time():
-    return time.strftime("%Y %m %d %H %M %S", time.localtime())
-
-def get_time(time_str):
-    time.strptime(time_str, "%Y %m %d %H %M %S")
-
-def get_future_time(seconds = 0, minutes = 0, hours = 0, starting_time = ""):
-    if starting_time == "":
-        starting_time = current_time()
-    time_delta = time.timedelta(hours = hours, minutes = minutes, seconds = seconds)
-    return starting_time + time_delta
-
-def get_time_delta(time1, time2 = ""):
-    if time2 == "":
-        time2 = current_time()
-    return time2 - time1
 
 # --> Image <--
 
