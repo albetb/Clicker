@@ -24,6 +24,7 @@ LARGE_LUMBERER = os.path.join(ASSET_DIR, "large_lumberer.png")
 
 LEFT_ARROW_MINUS = os.path.join(ASSET_DIR, "left_arrow_minus.png")
 RIGHT_ARROW_PLUS = os.path.join(ASSET_DIR, "right_arrow_plus.png")
+RIGHT_ARROW_PLUS_DISABLED = os.path.join(ASSET_DIR, "right_arrow_plus_disabled.png")
 
 TAG_POPULATION = os.path.join(ASSET_DIR, "tag_population.png")
 TAG_FOOD = os.path.join(ASSET_DIR, "tag_food.png")

@@ -1,7 +1,6 @@
 import pygame
 import assets
 import utils
-import events
 from engine import GameStats as stats
 
 class Ui:
@@ -12,7 +11,6 @@ class Ui:
     def __init__(self) -> None:
         pygame.init()
         self.clock = pygame.time.Clock()
-        self.fps = 10
 
         self.display_width = 1024
         self.display_height = self.display_width * 3 // 4
@@ -21,6 +19,7 @@ class Ui:
 
         self.init_images()
         self.game = utils.load_game()
+        self.fps = self.game.fps
 
         self.running = False
         self.current_menu = self.EXPLORE
@@ -72,8 +71,9 @@ class Ui:
         self.lumber_plus = assets.Image(assets.RIGHT_ARROW_PLUS, worker_x + menu_w + arrow_w + 8 * 2, worker_y + large_h(menu_w) + 10, arrow_w, arrow_h(arrow_w), menu=1)
         # City menu
         self.square_house = assets.Image(assets.SQUARE_HOUSE, worker_x, worker_y - 4, arrow_w * 1.3, square_h(arrow_w * 1.3), 0, 0.5, 0.46, menu=2)
-        self.house_cost = assets.Image(assets.LARGE_WOOD, worker_x + arrow_w * 1.3 + 8, worker_y, menu_w, large_h(menu_w), 0, 0.4, menu=2)
+        self.house_cost = assets.Image(assets.LARGE_WOOD, worker_x + arrow_w * 1.3 + 8, worker_y, menu_w, large_h(menu_w), 0, 0.37, menu=2)
         self.house_plus = assets.Image(assets.RIGHT_ARROW_PLUS, worker_x + arrow_w * 1.3 + menu_w + 2*  8, worker_y, arrow_w, arrow_h(arrow_w), menu=2)
+        self.house_time = assets.Image(assets.LARGE, worker_x + arrow_w * 1.3 + 8 + menu_w + 8 + arrow_w * 1.3 + 8, worker_y, menu_w, large_h(menu_w), menu=2)
 
     def run(self):
         self.running = True
@@ -103,7 +103,6 @@ class Ui:
             self.game.decrement_harvester(fast_buy(self.harvester_minus.collide(mouse, self.current_menu)))
             self.game.increment_lumber(fast_buy(self.lumber_plus.collide(mouse, self.current_menu)))
             self.game.decrement_lumber(fast_buy(self.lumber_minus.collide(mouse, self.current_menu)))
-            self.game.increment_house(fast_buy(self.house_plus.collide(mouse, self.current_menu)))
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -131,21 +130,18 @@ class Ui:
                 if self.city_menu.collide(mouse, self.current_menu):
                     self.current_menu = self.CITY
 
-                if self.food_button.collide(mouse, self.current_menu) and not self.game.event_list.event_exist("WoodPlus"):
+                if self.food_button.collide(mouse, self.current_menu):
                     self.game.increment_food()
 
                 if self.wood_button.collide(mouse, self.current_menu):
-                    if self.game.event_list.event_exist("WoodPlus"):
-                        self.game.event_list.select_event("WoodPlus").counter += (5 + round(0.8 * self.game.production("lumber"), 3)) * 10 * 5
-                        self.game.event_list.select_event("WoodPlus").subtract_time(seconds = 5)
-                    else:
-                        self.game.event_list.push(events.Event("WoodPlus", minutes = 5))
+                    self.game.increment_wood()
                     
                 self.game.increment_population(self.pop_plus.collide(mouse, self.current_menu))
                 self.game.increment_harvester(self.harvester_plus.collide(mouse, self.current_menu))
                 self.game.decrement_harvester(self.harvester_minus.collide(mouse, self.current_menu))
                 self.game.increment_lumber(self.lumber_plus.collide(mouse, self.current_menu))
                 self.game.decrement_lumber(self.lumber_minus.collide(mouse, self.current_menu))
+
                 self.game.increment_house(self.house_plus.collide(mouse, self.current_menu))
 
                 if self.game.food >= 2_147_483_647:
@@ -153,7 +149,6 @@ class Ui:
                     self.running = False
 
     def draw_menu(self):
-
         background = {
             self.EXPLORE: assets.BACKGROUND_EXPLORE,
             self.CITY: assets.BACKGROUND_CITY,
@@ -189,16 +184,16 @@ class Ui:
     def update_buttons(self):
         # Explore menu #
         ## Wood+ button and timer
-        #self.food_button.set_text(self.game.get_earn_per_click())
         if self.game.event_list.event_exist("WoodPlus"):
-            self.wood_timer.set_text(events.format_time_delta(self.game.event_list.select_event("WoodPlus").lasting_time()))
+            self.wood_timer.set_text(self.game.event_list.select_event("WoodPlus").format_lasting_time())
             self.wood_timer.draw(self.current_menu, self.display)
             self.food_button.change(assets.SQUARE_PLUS_FOOD_DISABLED)
+            self.food_button.set_text(self.game.get_earn_per_click(), (97, 83, 74))
         else:
             self.food_button.change(assets.SQUARE_PLUS_FOOD)
+            self.food_button.set_text(self.game.get_earn_per_click())
         self.wood_button.draw(self.current_menu, self.display)
         ## Central food+ button
-        self.food_button.set_text(self.game.get_earn_per_click())
         self.food_button.draw(self.current_menu, self.display)
         # Manage menu #
         ## Harvester buttons
@@ -217,8 +212,14 @@ class Ui:
         self.pop_plus.draw(self.current_menu, self.display)
         # City menu #
         ## House button and cost
-        self.square_house.set_text(self.game.house)
+        self.square_house.set_text(int(self.game.house))
         self.house_cost.set_text(self.game.format_house_cost())
         self.square_house.draw(self.current_menu, self.display)
         self.house_cost.draw(self.current_menu, self.display)
+        if self.game.event_list.event_exist("BuyHouse"):
+            self.house_time.set_text(self.game.event_list.select_event("BuyHouse").format_lasting_time())
+            self.house_time.draw(self.current_menu, self.display)
+            self.house_plus.change(assets.RIGHT_ARROW_PLUS_DISABLED)
+        else:
+            self.house_plus.change(assets.RIGHT_ARROW_PLUS)
         self.house_plus.draw(self.current_menu, self.display)

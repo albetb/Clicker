@@ -25,6 +25,9 @@ def format_time_delta(time_obj: timedelta) -> str:
         f"{seconds}s" if time_obj.seconds > 1 else ""]
     )
 
+def format_time_delta_str(days = 0, hours = 0, minutes = 0, seconds = 0) -> str:
+    return format_time_delta(timedelta(days = days, hours = hours, minutes = minutes, seconds = seconds))
+
 # --> Event class <--
 class Event:
     def __init__(self, name, event_type = "", counter = 0, days = 0, hours = 0, minutes = 0, seconds = 0):
@@ -53,6 +56,9 @@ class Event:
     def lasting_time(self) -> time:
         return self.ending_time() - now()
 
+    def format_lasting_time(self) -> str:
+        return format_time_delta(self.lasting_time())
+
     def subtract_time(self, days = 0, hours = 0, minutes = 0, seconds = 0):
         delta = timedelta(days = days, hours = hours, minutes = minutes, seconds = seconds)
         self.timedelta = max(self.timedelta - delta, timedelta(days = 0, hours = 0, minutes = 0, seconds = 0))
@@ -72,11 +78,6 @@ class Event:
 class EventList:
     def __init__(self, event_list = []):
         self.event_list = event_list
-
-    def __add__(self, other):
-        for event in other.event_list:
-            if not self.event_exist(event.name) or event.ending_time() <= self.select_event(event.name).ending_time():
-                self.push(event)
 
     def load_from_dict(self, event_dict_list):
         for event_dict in event_dict_list:
