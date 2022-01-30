@@ -6,23 +6,24 @@ import json
 class Font(pygame.font.Font):
     pass
 
-# --> Image <--
+# ----------> Image <----------------------------------------
 
 def load_image(path: str) -> pygame.surface.Surface:
+    """ Load an image from a file """
     return pygame.image.load(path)
 
-def scale_image(
-    surface: pygame.surface.Surface,
-    size: Any,
-    dest_surface: Optional[pygame.surface.Surface] = None,
-):
+def scale_image(surface: pygame.surface.Surface,
+                size: Any,
+                dest_surface: Optional[pygame.surface.Surface] = None):
+    """ Return an image scaled to a size """
     if dest_surface is not None:
          return pygame.transform.scale(surface, size, dest_surface)
     return pygame.transform.scale(surface, (int(size[0]), int(size[1])))
 
-# --> Load/save game <--
+# ----------> Load/save game <----------------------------------------
 
 def load_game() -> engine.Game:
+    """ Load a game from a .txt file """
     try:
         with open('savegame.txt', 'r') as file:
             data = json.load(file)
@@ -31,12 +32,15 @@ def load_game() -> engine.Game:
         return engine.Game()
 
 def save_game(game: engine.Game):
+    """ Save the current game to a .txt file """
     with open('savegame.txt', 'w+') as file:
         file.write(json.dumps(game.serialize()))
 
-# --> Formatting <--
+# ----------> Formatting <----------------------------------------
 
-def display_number(num, precision = "low") -> str:
+def format_number(num, precision = "low") -> str:
+    """ Display a number with less decimal and with a literal notation (es 20k),
+        precision 'low' and 'high' determine number of decimal with number < 1000 """
     if num < 10 ** 3 and (precision == "low" or num == round(num)):
         return f"{int(round(num, 0))}"
     elif num < 10 ** 3 and precision == "high":

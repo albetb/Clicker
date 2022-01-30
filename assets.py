@@ -2,7 +2,10 @@ import os
 import utils
 
 ASSET_DIR = os.path.join(".", "asset")
-# Name of button: shape_symbol_other.png
+
+# ----------> Button files <----------------------------------------
+# Name of buttons: shape_symbol_other.png
+
 BACKGROUND_EXPLORE = os.path.join(ASSET_DIR, "background_explore.jpg")
 BACKGROUND_CITY = os.path.join(ASSET_DIR, "background_city.png")
 BACKGROUND_MANAGE = os.path.join(ASSET_DIR, "background_manage.png")
@@ -30,8 +33,10 @@ TAG_POPULATION = os.path.join(ASSET_DIR, "tag_population.png")
 TAG_FOOD = os.path.join(ASSET_DIR, "tag_food.png")
 TAG_WOOD = os.path.join(ASSET_DIR, "tag_wood.png")
 
+# ----------> Image <----------------------------------------
+
 class Image:
-    def __init__(self, path, x, y, w, h, text = "", textx = 0.5, texty = 0.5, menu = -1):
+    def __init__(self, path, x, y, w, h, text = "", textx = 0.5, texty = 0.5, menu = -1) -> None:
         self.path = path # Image relative path
         self.x = x # X positioning, if x ↑ image →
         self.y = y # Y positioning, if y ↑ image ↓
@@ -42,12 +47,13 @@ class Image:
         self.textx = textx # X positioning of text [0, 1], 1 is 100% right
         self.texty = texty # Y positioning of text [0, 1], 1 is 100% down
         self.menu = menu # Set in what case image is displayed, -1 everytime
-        self.textSize = 25
+        self.textSize = 25 # Default text size
 
         self.change(self.path)
         self.set_text(text)
 
-    def set_text(self, text, color = (0, 0, 0)):
+    def set_text(self, text, color = (0, 0, 0)) -> None:
+        """ Set text over image, default color: black """
         if text != "":
             font = utils.Font('freesansbold.ttf', self.textSize)
             self.text = font.render(str(text), True, color)
@@ -55,18 +61,22 @@ class Image:
             avg = lambda a, l: (2 * a + l) / 2
             self.textRect.center = (avg(self.x, self.w) - (0.5 - self.textx) * self.w, avg(self.y, self.h) - (self.textSize / 6) - (0.5 - self.texty) * self.h)
     
-    def set_text_size(self, textSize):
+    def set_text_size(self, textSize) -> None:
+        """ Change default text size """
         self.textSize = textSize
 
-    def change(self, path):
+    def change(self, path) -> None:
+        """ Change picture of image """
         picture = utils.load_image(path)
         self.picture = utils.scale_image(picture, (self.w, self.h))
 
-    def draw(self, menu, display):
+    def draw(self, menu, display) -> None:
+        """ Display image on screen based on the menu """
         if self.menu < 0 or self.menu == menu:
             display.blit(self.picture, (self.x, self.y))
             if self.text != "":
                 display.blit(self.text, self.textRect)
 
-    def collide(self, p, menu):
+    def collide(self, p, menu) -> None:
+        """ Return True if mouse collide with button """
         return all([self.x <= p[0], p[0] <= self.x + self.w, self.y <= p[1], p[1] <= self.y + self.h, self.menu < 0 or menu == self.menu])

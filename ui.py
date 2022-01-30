@@ -25,7 +25,8 @@ class Ui:
         self.current_menu = self.EXPLORE
         self.press_time = 0 # Time when a button pressing started
 
-    def init_images(self):
+    def init_images(self) -> None:
+        """ Initialize image """
         self.background = assets.Image(assets.BACKGROUND_EXPLORE, 0, 0, self.display_width, self.display_height)
         # Lambdas who calculate button heigth given width
         large_h = lambda large_w: large_w * 100 // 275
@@ -75,7 +76,8 @@ class Ui:
         self.house_plus = assets.Image(assets.RIGHT_ARROW_PLUS, worker_x + arrow_w * 1.3 + menu_w + 2*  8, worker_y, arrow_w, arrow_h(arrow_w), menu=2)
         self.house_time = assets.Image(assets.LARGE, worker_x + arrow_w * 1.3 + 8 + menu_w + 8 + arrow_w * 1.3 + 8, worker_y, menu_w, large_h(menu_w), menu=2)
 
-    def run(self):
+    def run(self) -> None:
+        """ Core loop of the game """
         self.running = True
         while self.running:
             # Update state
@@ -91,7 +93,8 @@ class Ui:
             utils.save_game(self.game)
         pygame.quit()
 
-    def loop(self):
+    def loop(self) -> None:
+        """ A single loop of the game, occurs every frame """
         self.game.autominer()
         self.game.manage_event()
         mouse = pygame.mouse.get_pos()
@@ -123,18 +126,15 @@ class Ui:
 
                 if self.manage_menu.collide(mouse, self.current_menu):
                     self.current_menu = self.MANAGE
-
                 if self.explore_menu.collide(mouse, self.current_menu):
                     self.current_menu = self.EXPLORE
-                    
                 if self.city_menu.collide(mouse, self.current_menu):
                     self.current_menu = self.CITY
 
                 if self.food_button.collide(mouse, self.current_menu):
-                    self.game.increment_food()
-
+                    self.game.food_gathering()
                 if self.wood_button.collide(mouse, self.current_menu):
-                    self.game.increment_wood()
+                    self.game.wood_gathering()
                     
                 self.game.increment_population(self.pop_plus.collide(mouse, self.current_menu))
                 self.game.increment_harvester(self.harvester_plus.collide(mouse, self.current_menu))
@@ -148,7 +148,8 @@ class Ui:
                     print("You Beat the game")
                     self.running = False
 
-    def draw_menu(self):
+    def draw_menu(self) -> None:
+        """ Draw bottom menu and change background """
         background = {
             self.EXPLORE: assets.BACKGROUND_EXPLORE,
             self.CITY: assets.BACKGROUND_CITY,
@@ -166,14 +167,15 @@ class Ui:
         self.manage_menu.change(assets.LARGE_SELECTED if self.current_menu == self.MANAGE else assets.LARGE)
         self.manage_menu.draw(self.current_menu, self.display)
 
-    def update_counters(self):
+    def update_counters(self) -> None:
+        """ Update resources and production counter """
         # Food counter
-        self.food_prod_tag.set_text(self.game.harvester_production_per_second(self.fps))
+        self.food_prod_tag.set_text(self.game.harvester_production_per_second())
         self.food_tag.set_text(self.game.get_formatted_stats(stats.food))
         self.food_prod_tag.draw(self.current_menu, self.display)
         self.food_tag.draw(self.current_menu, self.display)
         # Wood counter
-        self.wood_prod_tag.set_text(self.game.lumber_production_per_second(self.fps))
+        self.wood_prod_tag.set_text(self.game.lumber_production_per_second())
         self.teg_wood.set_text(self.game.get_formatted_stats(stats.wood))
         self.wood_prod_tag.draw(self.current_menu, self.display)
         self.teg_wood.draw(self.current_menu, self.display)
@@ -181,17 +183,18 @@ class Ui:
         self.tag_population.set_text(f"{self.game.get_formatted_stats(stats.population)}/{self.game.format_population_limit()}")
         self.tag_population.draw(self.current_menu, self.display)
 
-    def update_buttons(self):
+    def update_buttons(self) -> None:
+        """ Draw button according to the current menu """
         # Explore menu #
         ## Wood+ button and timer
         if self.game.event_list.event_exist("WoodPlus"):
             self.wood_timer.set_text(self.game.event_list.select_event("WoodPlus").format_lasting_time())
             self.wood_timer.draw(self.current_menu, self.display)
             self.food_button.change(assets.SQUARE_PLUS_FOOD_DISABLED)
-            self.food_button.set_text(self.game.get_earn_per_click(), (97, 83, 74))
+            self.food_button.set_text(self.game.format_food_gathering(), (97, 83, 74)) # Set text grey
         else:
             self.food_button.change(assets.SQUARE_PLUS_FOOD)
-            self.food_button.set_text(self.game.get_earn_per_click())
+            self.food_button.set_text(self.game.format_food_gathering())
         self.wood_button.draw(self.current_menu, self.display)
         ## Central food+ button
         self.food_button.draw(self.current_menu, self.display)
