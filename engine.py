@@ -30,8 +30,8 @@ class Game:
         # Add a value to resources for offline production
         if self.time != "":
             offline_production = min(events.offline_time(self.time), MAX_OFFLINE_TIME) * self.fps * OFFLINE_PRODUCTION_MULTIPLIER
-            self.food += self.harvester_production() * offline_production
-            self.wood += self.lumber_production() * offline_production
+            self.food += self.harvester_production() * offline_production / self.fps
+            self.wood += self.lumber_production() * offline_production / self.fps
 
         # Initialize event list
         if event_list != "":
@@ -83,28 +83,28 @@ class Game:
 
     def production(self, stat: GameStats) -> int:
         """ Base function for worker production calculation, 
-            return production PER FRAME for a resource """
+            return production PER SECOND for a resource """
         stats = {
             GameStats.harvester: self.harvester,
             GameStats.lumber: self.lumber
         }
-        return 0.05 * stats[stat] ** 1.05 * (1 + (stats[stat] // 10) * 0.5)
+        return stats[stat] ** 1.05 * (1 + (stats[stat] // 10) * 0.5)
 
     def harvester_production(self) -> int:
-        """ Return food production PER FRAME from harvester minus population eating food """
-        return self.production(GameStats.harvester) - 0.005 * self.population
+        """ Return food production PER SECOND from harvester minus population eating food """
+        return self.production(GameStats.harvester) - 0.1 * self.population
 
     def harvester_production_per_second(self) -> str:
         """ Return a formatted string for displaying food production """
-        return utils.format_number(self.harvester_production() * self.fps, "high") + "/s"
+        return utils.format_number(self.harvester_production(), "high") + "/s"
 
     def lumber_production(self) -> int:
-        """ Return wood production PER FRAME from lumber """
+        """ Return wood production PER SECOND from lumber """
         return self.production(GameStats.lumber) * 0.8
 
     def lumber_production_per_second(self) -> str:
         """ Return a formatted string for displaying wood production """
-        return utils.format_number(self.lumber_production() * self.fps, "high") + "/s"
+        return utils.format_number(self.lumber_production(), "high") + "/s"
 
     def population_cost(self) -> int:
         """ Return cost in food for a unit of population """
@@ -166,8 +166,8 @@ class Game:
     def autominer(self) -> None:
         """ Add food and wood for worker production, reduce food for people eating in harvester_production(),
             if food < -100 population is reduced """
-        self.food = round(self.food + self.harvester_production(), 3)
-        self.wood = round(self.wood + self.lumber_production(), 3)
+        self.food += self.harvester_production() / self.fps
+        self.wood += self.lumber_production() / self.fps
         if self.food < -100:
             self.population = max(0, self.population - 1)
             self.food += 100
@@ -255,4 +255,4 @@ class Game:
         """ Add value to counter of the wood gathering event, depends to the number of lumber """
         if self.event_list.event_exist("WoodPlus"):
             mult = seconds * self.fps + tick
-            self.event_list.select_event("WoodPlus").counter += mult * (1 + round(self.lumber_production() * 0.5, 3))
+            self.event_list.select_event("WoodPlus").counter += mult * (0.2 + self.lumber_production() * 0.5 / self.fps)

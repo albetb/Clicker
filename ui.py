@@ -26,6 +26,10 @@ class Ui:
         self.press_time = 0 # Time when a button pressing started
         self.starting_position = (0, 0)
 
+    def queue_image(self, name, time):
+        #self.house_time = assets.Image(assets.LARGE, (self.display_width * 0.273 - menu_w) / 2, 0, menu_w, large_h(menu_w), menu=2, textx = 0.58)
+        return assets.Image(assets.LARGE, (self.display_width * 0.273 - 275) / 2, 0, 275, 100, 0, 0.4, menu=1)
+
     def init_images(self) -> None:
         """ Initialize image """
         self.background = assets.Image(assets.BACKGROUND_EXPLORE, 0, 0, self.display_width, self.display_height)
@@ -116,6 +120,10 @@ class Ui:
             #if 0 <= self.house_time.y + y_mov <= self.building_frame.h - self.house_time.h:
             self.house_time.move(y = y_mov, lock = True, max_w = self.building_frame.w, max_h = self.building_frame.h)
             self.starting_position = mouse
+        else:
+            if self.house_time.y > 0:
+                y_mov = -1 * max(self.house_time.y / 5, 1) # Slowly pushes queue up
+                self.house_time.move(y = y_mov, lock = True, max_w = self.building_frame.w, max_h = self.building_frame.h)
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
