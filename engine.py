@@ -1,3 +1,4 @@
+from datetime import timedelta
 from enum import Enum, unique
 import utils
 import events
@@ -116,7 +117,7 @@ class Game:
 
     def house_cost(self) -> int:
         """ Return cost in wood for a house """
-        return int(round(150 * 1.15 ** self.house))
+        return int(round(150 * 1.2 ** self.house))
     
     def format_house_cost(self) -> str:
         """ Return house cost as a formatted string for displaying """
@@ -153,20 +154,20 @@ class Game:
         return utils.format_number(self.food_gathering(dry_run=True), "high")
 
     def wood_gathering(self) -> None:
-        """ Add wood after a period of time,
-            clicking again the button shorten that time,
-            disable food gathering button """
+        """ Add wood after a period of time, clicking again the button shorten that time,
+            disable food gathering button, time delta is 2 min + 1 sec * lumberer """
         if not self.event_list.event_exist("WoodPlusDebuff"):
             if self.event_list.event_exist("WoodPlus"):
                 self.event_wood_plus_production(seconds = 2)
                 self.event_list.select_event("WoodPlus").subtract_time(seconds = 2)
             else:
-                self.event_list.push(events.Event("WoodPlus", "Resources", minutes = 2))
+                time_delta_seconds = 2 * 60 + self.lumber
+                self.event_list.push(events.Event("WoodPlus", "Resources", seconds = time_delta_seconds))
 
     def autominer(self) -> None:
-        """ Add food and wood for worker production, 
-            reduce food for people eating, if food < -100 population is reduced """
-        self.food = round(self.food + self.harvester_production() - self.population * 0.005, 3)
+        """ Add food and wood for worker production, reduce food for people eating in harvester_production(),
+            if food < -100 population is reduced """
+        self.food = round(self.food + self.harvester_production(), 3)
         self.wood = round(self.wood + self.lumber_production(), 3)
         if self.food < -100:
             self.population = max(0, self.population - 1)
@@ -195,12 +196,18 @@ class Game:
     def increment_lumber(self, num = 1) -> None:
         """ Add a number of people to lumber """
         for _ in range(num):
-            self.lumber += self.population > self.harvester + self.lumber
+            if self.population > self.harvester + self.lumber:
+                self.lumber += 1
+                if self.event_list.event_exist("WoodPlus"):
+                    self.event_list.select_event("WoodPlus").add_time(seconds = 1)
 
     def decrement_lumber(self, num = 1) -> None:
         """ Subtract a number of people to lumber """
         for _ in range(num):
-            self.lumber -= self.lumber > 0
+            if self.lumber > 0:
+                self.lumber -= 1
+                if self.event_list.event_exist("WoodPlus"):
+                    self.event_list.select_event("WoodPlus").subtract_time(seconds = 1)
 
     def increment_house(self, check) -> None:
         """ Add a house to production, will be added after some times """
@@ -228,13 +235,13 @@ class Game:
                 for event in self.event_list.expired_event():
                     if event.name == "WoodPlus":
                         self.wood += event.counter
-                        self.event_list.push(events.Event("WoodPlusDebuff", "Debuff", seconds = 3))
+                        self.event_list.push(events.Event("WoodPlusDebuff", "Debuff", seconds = 3)) # Can't reactivate gathering wood for 3 sec
                     if event.name == "BuyHouse":
                         self.house += event.counter
                 self.event_list.remove_expired()
 
             if self.event_list.event_exist("WoodPlus"):
-                self.event_wood_plus_production()
+                self.event_wood_plus_production(tick = 1)
 
     def init_event(self) -> None:
         """ Init event at the start of the game, add value to counter for time passed """
@@ -245,7 +252,7 @@ class Game:
                 time_elapsed = events.now() - events.get_time(self.time)
             self.event_wood_plus_production(seconds = time_elapsed.seconds)
 
-    def event_wood_plus_production(self, seconds = 0, tick = 1) -> None:
+    def event_wood_plus_production(self, seconds = 0, tick = 0) -> None:
         """ Add value to counter of the wood gathering event, depends to the number of lumber """
         if self.event_list.event_exist("WoodPlus"):
             mult = seconds * self.fps + tick

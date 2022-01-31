@@ -77,6 +77,11 @@ class Event:
         """ Return remaining time to end formatted for displaying """
         return format_time_delta(max(self.lasting_time(), timedelta(seconds=0)))
 
+    def add_time(self, days = 0, hours = 0, minutes = 0, seconds = 0):
+        """ Add time to remaining time of event """
+        delta = timedelta(days = days, hours = hours, minutes = minutes, seconds = seconds)
+        self.timedelta = min(self.timedelta + delta, timedelta(days = 10, hours = 0, minutes = 0, seconds = 0))
+
     def subtract_time(self, days = 0, hours = 0, minutes = 0, seconds = 0):
         """ Remove time from remaining time of event """
         delta = timedelta(days = days, hours = hours, minutes = minutes, seconds = seconds)
