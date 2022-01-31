@@ -24,6 +24,7 @@ class Ui:
         self.running = False
         self.current_menu = self.EXPLORE
         self.press_time = 0 # Time when a button pressing started
+        self.starting_position = (0, 0)
 
     def init_images(self) -> None:
         """ Initialize image """
@@ -63,7 +64,7 @@ class Ui:
         self.pop_plus = assets.Image(assets.RIGHT_ARROW_PLUS, (self.display_width - 3 * 1.5 * resource_w) // 4 + resource_w + 15 + menu_w * 0.85 + 7, 20 + 15 + 9 + tag_h(resource_w), arrow_w * 0.7, arrow_h(arrow_w * 0.7), menu=1)
         self.pop_cost = assets.Image(assets.LARGE_FOOD, (self.display_width - 3 * 1.5 * resource_w) // 4 + resource_w + 15, 20 + 15 + tag_h(resource_w), menu_w * 0.85, large_h(menu_w * 0.85), 0, 0.4, menu=1)
         # Worker menu
-        worker_x, worker_y = 90, 280
+        worker_x, worker_y = 70, 280
         self.harvester_tag = assets.Image(assets.LARGE_HARVESTER, worker_x, worker_y, menu_w, large_h(menu_w), 0, 0.4, menu=1)
         self.harvester_minus = assets.Image(assets.LEFT_ARROW_MINUS, worker_x + menu_w + 8, worker_y, arrow_w, arrow_h(arrow_w), menu=1)
         self.harvester_plus = assets.Image(assets.RIGHT_ARROW_PLUS, worker_x + menu_w + arrow_w + 8 * 2, worker_y, arrow_w, arrow_h(arrow_w), menu=1)
@@ -71,10 +72,12 @@ class Ui:
         self.lumber_minus = assets.Image(assets.LEFT_ARROW_MINUS, worker_x + menu_w + 8, worker_y + large_h(menu_w) + 10, arrow_w, arrow_h(arrow_w), menu=1)
         self.lumber_plus = assets.Image(assets.RIGHT_ARROW_PLUS, worker_x + menu_w + arrow_w + 8 * 2, worker_y + large_h(menu_w) + 10, arrow_w, arrow_h(arrow_w), menu=1)
         # City menu
+        self.building_frame = assets.Image(assets.FRAME, self.display_width * 0.625, self.display_height * 0.336, self.display_width * 0.273, self.display_height * 0.439, menu=2)
         self.square_house = assets.Image(assets.SQUARE_HOUSE, worker_x, worker_y - 4, arrow_w * 1.3, square_h(arrow_w * 1.3), 0, 0.5, 0.46, menu=2)
         self.house_cost = assets.Image(assets.LARGE_WOOD, worker_x + arrow_w * 1.3 + 8, worker_y, menu_w, large_h(menu_w), 0, 0.37, menu=2)
         self.house_plus = assets.Image(assets.RIGHT_ARROW_PLUS, worker_x + arrow_w * 1.3 + menu_w + 2*  8, worker_y, arrow_w, arrow_h(arrow_w), menu=2)
-        self.house_time = assets.Image(assets.LARGE, worker_x + arrow_w * 1.3 + 8 + menu_w + 8 + arrow_w * 1.3 + 8, worker_y, menu_w, large_h(menu_w), menu=2)
+        self.house_time = assets.Image(assets.LARGE, (self.display_width * 0.273 - menu_w) / 2, 0, menu_w, large_h(menu_w), menu=2, textx = 0.58)
+        self.house = assets.Image(assets.HOUSE, large_h(menu_w) * 0.125, large_h(menu_w) * 0.125, large_h(menu_w) * 0.75, large_h(menu_w) * 0.75, menu=2)
 
     def run(self) -> None:
         """ Core loop of the game """
@@ -101,11 +104,18 @@ class Ui:
 
         fast_buy = lambda collide: collide * (((pygame.time.get_ticks() - self.press_time) // 1000) ** 2)
         if self.press_time > 0: # Fast buy when long press button
+
             self.game.increment_population(fast_buy(self.pop_plus.collide(mouse, self.current_menu)))
             self.game.increment_harvester(fast_buy(self.harvester_plus.collide(mouse, self.current_menu)))
             self.game.decrement_harvester(fast_buy(self.harvester_minus.collide(mouse, self.current_menu)))
             self.game.increment_lumber(fast_buy(self.lumber_plus.collide(mouse, self.current_menu)))
             self.game.decrement_lumber(fast_buy(self.lumber_minus.collide(mouse, self.current_menu)))
+
+        if self.starting_position != (0, 0):
+            y_mov = mouse[1] - self.starting_position[1] # If y_mov up image down
+            #if 0 <= self.house_time.y + y_mov <= self.building_frame.h - self.house_time.h:
+            self.house_time.move(y = y_mov, lock = True, max_w = self.building_frame.w, max_h = self.building_frame.h)
+            self.starting_position = mouse
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -113,11 +123,15 @@ class Ui:
 
             if event.type == pygame.MOUSEBUTTONDOWN:
 
-                if self.press_time == 0: # Save time when start pressing button
+                if self.current_menu == self.CITY and self.building_frame.collide(mouse, self.current_menu):
+                    if self.starting_position == (0, 0):
+                        self.starting_position = mouse
+                elif self.press_time == 0: # Save time when start pressing button
                     self.press_time = pygame.time.get_ticks()
 
             if event.type == pygame.MOUSEBUTTONUP:
 
+                self.starting_position = (0, 0)
                 if pygame.time.get_ticks() - self.press_time > 1000:
                     self.press_time = 0 # Reset time when relase button
                     return
@@ -215,14 +229,17 @@ class Ui:
         self.pop_plus.draw(self.current_menu, self.display)
         # City menu #
         ## House button and cost
+        self.building_frame.refresh()
         self.square_house.set_text(int(self.game.house))
         self.house_cost.set_text(self.game.format_house_cost())
         self.square_house.draw(self.current_menu, self.display)
         self.house_cost.draw(self.current_menu, self.display)
         if self.game.event_list.event_exist("BuyHouse"):
             self.house_time.set_text(self.game.event_list.select_event("BuyHouse").format_lasting_time())
-            self.house_time.draw(self.current_menu, self.display)
+            self.house.draw(self.current_menu, self.house_time.picture)
+            self.house_time.draw(self.current_menu, self.building_frame.picture)
             self.house_plus.change(assets.RIGHT_ARROW_PLUS_DISABLED)
         else:
             self.house_plus.change(assets.RIGHT_ARROW_PLUS)
+        self.building_frame.draw(self.current_menu, self.display)
         self.house_plus.draw(self.current_menu, self.display)

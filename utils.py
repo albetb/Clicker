@@ -1,24 +1,30 @@
-import pygame
+
+from pygame import Rect, image, transform, font
+from pygame.surface import Surface
 from typing import Optional, Any
 import engine
 import json
 
-class Font(pygame.font.Font):
+class Font(font.Font):
     pass
 
 # ----------> Image <----------------------------------------
 
-def load_image(path: str) -> pygame.surface.Surface:
+def load_image(path: str) -> Surface:
     """ Load an image from a file """
-    return pygame.image.load(path)
+    return image.load(path)
 
-def scale_image(surface: pygame.surface.Surface,
+def scale_image(surface: Surface,
                 size: Any,
-                dest_surface: Optional[pygame.surface.Surface] = None):
+                dest_surface: Optional[Surface] = None):
     """ Return an image scaled to a size """
     if dest_surface is not None:
-         return pygame.transform.scale(surface, size, dest_surface)
-    return pygame.transform.scale(surface, (int(size[0]), int(size[1])))
+        return transform.scale(surface, size, dest_surface)
+    return transform.scale(surface, (int(size[0]), int(size[1])))
+
+def set_clipping_area(surface: Surface, left: int, top: int, width: int, height: int):
+    surface.set_clip(Rect(left, top, width, height))
+    
 
 # ----------> Load/save game <----------------------------------------
 

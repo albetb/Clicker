@@ -2,7 +2,7 @@ from enum import Enum, unique
 import utils
 import events
 
-FRAME_PER_SECOND = 10
+FRAME_PER_SECOND = 60
 OFFLINE_PRODUCTION_MULTIPLIER = 0.9
 MAX_OFFLINE_TIME = 60 * 60 * 24 # In seconds
 
@@ -116,7 +116,7 @@ class Game:
 
     def house_cost(self) -> int:
         """ Return cost in wood for a house """
-        return int(round(150 * 1.2 ** self.house))
+        return int(round(1000 * 1.2 ** self.house))
     
     def format_house_cost(self) -> str:
         """ Return house cost as a formatted string for displaying """
@@ -148,7 +148,7 @@ class Game:
         return value
 
     def format_food_gathering(self) -> str:
-        """ Return food produced form food gaathering as a formatted string for displaying """
+        """ Return food produced form food gathering as a formatted string for displaying """
         value = self.food_gathering(dry_run=True)
         return utils.format_number(self.food_gathering(dry_run=True), "high")
 

@@ -1,6 +1,9 @@
 from datetime import timedelta, datetime
+import assets
 
 # ----------> Time functions <----------------------------------------
+
+TIME_FORMATTING = "%Y %m %d %H %M %S"
 
 def now() -> datetime:
     """ Return a datetime with current date and time """
@@ -8,15 +11,15 @@ def now() -> datetime:
 
 def current_time() -> str:
     """ Return a formatted string with current date and time """
-    return now().strftime("%Y %m %d %H %M %S")
+    return now().strftime(TIME_FORMATTING)
 
 def get_time(time_str: str) -> datetime:
     """ Return a datetime form a formatted string """
-    return datetime.strptime(time_str, "%Y %m %d %H %M %S")
+    return datetime.strptime(time_str, TIME_FORMATTING)
 
 def set_time(time_obj: datetime) -> str:
     """ Return a formatted string form a datetime """
-    return time_obj.strftime("%Y %m %d %H %M %S")
+    return time_obj.strftime(TIME_FORMATTING)
 
 def format_time_delta(time_obj: timedelta) -> str:
     """ Return a formatted string from a time delta object """
@@ -31,7 +34,7 @@ def format_time_delta(time_obj: timedelta) -> str:
         f"{seconds}s" if time_obj.seconds > 1 else ""]
     )
 
-def format_time_delta_str(days = 0, hours = 0, minutes = 0, seconds = 0) -> str:
+def format_time_delta_str(days: int = 0, hours: int = 0, minutes: int = 0, seconds: int = 0) -> str:
     """ Return a formatted string from a time delta as days, hours, minutes, seconds """
     return format_time_delta(timedelta(days = days, hours = hours, minutes = minutes, seconds = seconds))
 
@@ -48,8 +51,9 @@ class Event:
         self.counter = counter # Not time related, eventually contains a number who give reward at the event end
         self.starting_time = now() # Don't change once is initialized except when loading game
         self.timedelta = timedelta(days = days, hours = hours, minutes = minutes, seconds = seconds) # Event duration
+            
 
-    def set_starting_time(self, starting_time) -> None:
+    def set_starting_time(self, starting_time: str or datetime) -> None:
         """ Take a string o a datetime object and set it as current starting time """
         if isinstance(starting_time, str):
             self.starting_time = get_time(starting_time)
@@ -69,7 +73,7 @@ class Event:
         """ Return True if ending time of event is passed """
         return now() >= self.ending_time() - timedelta(seconds = 1)
 
-    def lasting_time(self) -> datetime:
+    def lasting_time(self) -> timedelta:
         """ Return remaining time to end of event """
         return self.ending_time() - now()
 
@@ -77,17 +81,17 @@ class Event:
         """ Return remaining time to end formatted for displaying """
         return format_time_delta(max(self.lasting_time(), timedelta(seconds=0)))
 
-    def add_time(self, days = 0, hours = 0, minutes = 0, seconds = 0):
+    def add_time(self, days: int = 0, hours: int = 0, minutes: int = 0, seconds: int = 0) -> None:
         """ Add time to remaining time of event """
         delta = timedelta(days = days, hours = hours, minutes = minutes, seconds = seconds)
         self.timedelta = min(self.timedelta + delta, timedelta(days = 10, hours = 0, minutes = 0, seconds = 0))
 
-    def subtract_time(self, days = 0, hours = 0, minutes = 0, seconds = 0):
+    def subtract_time(self, days: int = 0, hours: int = 0, minutes: int = 0, seconds: int = 0) -> None:
         """ Remove time from remaining time of event """
         delta = timedelta(days = days, hours = hours, minutes = minutes, seconds = seconds)
         self.timedelta = max(self.timedelta - delta, timedelta(days = 0, hours = 0, minutes = 0, seconds = 0))
 
-    def add_counter(self, value) -> None:
+    def add_counter(self, value: float) -> None:
         """ Add a value to counter """
         self.counter += value
 
@@ -105,7 +109,7 @@ class EventList:
     def __init__(self, event_list: list = []) -> None:
         self.event_list = event_list
 
-    def deserialize_event_list(self, event_dict_list) -> None:
+    def deserialize_event_list(self, event_dict_list: list) -> None:
         """ Load a list of event from a list of dictionary """
         for event_dict in event_dict_list:
             event = Event(name = event_dict["name"],
@@ -122,7 +126,13 @@ class EventList:
                     
     def push(self, event: Event) -> None:
         """ Insert an event in list """
-        if self.event_exist(event.name):
+        if event.type == "Building":
+            if self.event_type_exist("Building"):
+                total_lasting_time = 0
+                for event in self.building_queue():
+                    total_lasting_time += event.lasting_time().seconds
+                self.event.set_timedelta(self.event.timedelta.seconds + total_lasting_time)
+        elif self.event_exist(event.name):
             self.remove(event.name)
         self.event_list.append(event)
 
@@ -152,6 +162,13 @@ class EventList:
                 return True
         return False
 
+    def event_type_exist(self, event_type: str) -> bool:
+        """ Given a type return True if exist an event with that type """
+        for event in self.event_list:
+            if event.type == event_type:
+                return True
+        return False
+
     def select_event(self, event_name: str) -> Event:
         """ Given a name return first event with that name,
             return an empty event if don't exist """
@@ -159,3 +176,17 @@ class EventList:
             if event.name == event_name:
                 return event
         return Event("")
+
+    def building_queue(self) -> list:
+        return [event for event in self.event_exist if event.type == "Building"]
+
+class Queue:
+    def __init__(self, event_list: EventList) -> None:
+        self.list = [BuildingQueue(event.name, event.format_lasting_time()) for event in event_list if event.type == "Building"]
+
+class BuildingQueue:
+    def __init__(self, name: str, timedelta: str) -> None:
+        image = {
+            #"House": assets.Image(assets.HOUSE, , , , , menu=2)
+        
+        }
