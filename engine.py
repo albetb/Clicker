@@ -1,10 +1,9 @@
-from datetime import timedelta
 from enum import Enum, unique
 import utils
 import events
 
-OFFLINE_PRODUCTION_MULTIPLIER = 0.9
 FRAME_PER_SECOND = 10
+OFFLINE_PRODUCTION_MULTIPLIER = 0.9
 MAX_OFFLINE_TIME = 60 * 60 * 24 # In seconds
 
 @unique
@@ -139,7 +138,7 @@ class Game:
         """ Return lumber as a formatted string for displaying """
         return utils.format_number(self.lumber)
 
-    def food_gathering(self, dry_run = False) -> float:
+    def food_gathering(self, dry_run: bool = False) -> float:
         """ Add food when the central button is clicked, 
             if dry_run is True return food production,
             don't work during wood gathering  """
@@ -176,24 +175,24 @@ class Game:
     # ----------> Managing <----------------------------------------
 
     # Some function are made with this "for _ in range(num)" for working with fast buying when a button is long pressed
-    def increment_population(self, num = 1) -> None:
+    def increment_population(self, num: int = 1) -> None:
         """ Add a number of people to total population, food will be subtracted """
         for _ in range(num):
             if self.food >= self.population_cost() and self.population < self.population_limit():
                 self.food -= self.population_cost()
                 self.population += 1
 
-    def increment_harvester(self, num = 1) -> None:
+    def increment_harvester(self, num: int = 1) -> None:
         """ Add a number of people to harvester """
         for _ in range(num):
             self.harvester += self.population > self.harvester + self.lumber
 
-    def decrement_harvester(self, num = 1) -> None:
+    def decrement_harvester(self, num: int = 1) -> None:
         """ Subtract a number of people to harvester """
         for _ in range(num):
             self.harvester -= self.harvester > 0
 
-    def increment_lumber(self, num = 1) -> None:
+    def increment_lumber(self, num: int = 1) -> None:
         """ Add a number of people to lumber """
         for _ in range(num):
             if self.population > self.harvester + self.lumber:
@@ -201,7 +200,7 @@ class Game:
                 if self.event_list.event_exist("WoodPlus"):
                     self.event_list.select_event("WoodPlus").add_time(seconds = 1)
 
-    def decrement_lumber(self, num = 1) -> None:
+    def decrement_lumber(self, num: int = 1) -> None:
         """ Subtract a number of people to lumber """
         for _ in range(num):
             if self.lumber > 0:
@@ -209,13 +208,13 @@ class Game:
                 if self.event_list.event_exist("WoodPlus"):
                     self.event_list.select_event("WoodPlus").subtract_time(seconds = 1)
 
-    def increment_house(self, check) -> None:
+    def increment_house(self, check: bool) -> None:
         """ Add a house to production, will be added after some times """
         if check and not self.event_list.event_exist("BuyHouse") and self.wood >= self.house_cost():
             self.wood -= self.house_cost()
             self.event_list.push(events.Event("BuyHouse", "Construction", counter = 1, minutes = self.house + 1))
 
-    def get_formatted_stats(self, stat: GameStats, precision = "low") -> str:
+    def get_formatted_stats(self, stat: GameStats, precision: str = "low") -> str:
         """ Used for formatting stats, return a string for displaying the number """
         stats = {
             GameStats.harvester: self.harvester,
@@ -252,7 +251,7 @@ class Game:
                 time_elapsed = events.now() - events.get_time(self.time)
             self.event_wood_plus_production(seconds = time_elapsed.seconds)
 
-    def event_wood_plus_production(self, seconds = 0, tick = 0) -> None:
+    def event_wood_plus_production(self, seconds: int = 0, tick: int = 0) -> None:
         """ Add value to counter of the wood gathering event, depends to the number of lumber """
         if self.event_list.event_exist("WoodPlus"):
             mult = seconds * self.fps + tick

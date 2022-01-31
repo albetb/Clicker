@@ -42,7 +42,7 @@ def offline_time(time: str) -> int:
 # ----------> Event class <----------------------------------------
 
 class Event:
-    def __init__(self, name, type = "", counter = 0, days = 0, hours = 0, minutes = 0, seconds = 0) -> None:
+    def __init__(self, name: str, type: str = "", counter: float = 0, days: int = 0, hours: int = 0, minutes: int = 0, seconds: int = 0) -> None:
         self.name = name # Event name
         self.type = type # Event type (eg. resouces or construction)
         self.counter = counter # Not time related, eventually contains a number who give reward at the event end
@@ -102,7 +102,7 @@ class Event:
         }
 
 class EventList:
-    def __init__(self, event_list = []) -> None:
+    def __init__(self, event_list: list = []) -> None:
         self.event_list = event_list
 
     def deserialize_event_list(self, event_dict_list) -> None:

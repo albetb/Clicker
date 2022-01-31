@@ -38,7 +38,7 @@ def save_game(game: engine.Game):
 
 # ----------> Formatting <----------------------------------------
 
-def format_number(num, precision = "low") -> str:
+def format_number(num: float, precision: str = "low") -> str:
     """ Display a number with less decimal and with a literal notation (es 20k),
         precision 'low' and 'high' determine number of decimal with number < 1000 """
     if num < 10 ** 3 and (precision == "low" or num == round(num)):
