@@ -147,11 +147,15 @@ class EventList:
 
     def event_exist(self, event_name: str) -> bool:
         """ Given a name return True if exist an event with that name """
-        return len([event for event in self.event_list if event.name == event_name]) >= 1
+        for event in self.event_list:
+            if event.name == event_name:
+                return True
+        return False
 
     def select_event(self, event_name: str) -> Event:
         """ Given a name return first event with that name,
             return an empty event if don't exist """
-        if not self.event_exist(event_name):
-            return Event("")
-        return [event for event in self.event_list if event.name == event_name][0]
+        for event in self.event_list:
+            if event.name == event_name:
+                return event
+        return Event("")
