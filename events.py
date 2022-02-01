@@ -1,9 +1,8 @@
 from datetime import timedelta, datetime
-import assets
 
 # ----------> Time functions <----------------------------------------
 
-TIME_FORMATTING = "%Y %m %d %H %M %S"
+TIME_FORMATTING = "%Y-%m-%dT%H:%M:%S"
 
 def now() -> datetime:
     """ Return a datetime with current date and time """
@@ -169,6 +168,14 @@ class EventList:
                 return True
         return False
 
+    def count_event_type(self, event_type: str) -> bool:
+        """ Given a type return the number of event with that type """
+        return len([1 for event in self.event_list if event.type == event_type])
+
+    def count_event_name(self, event_name: str) -> bool:
+        """ Given a name return the number of event with that name """
+        return len([1 for event in self.event_list if event.name == event_name])
+
     def select_event(self, event_name: str) -> Event:
         """ Given a name return first event with that name,
             return an empty event if don't exist """
@@ -177,8 +184,13 @@ class EventList:
                 return event
         return Event("")
 
-    def building_queue(self) -> list:
-        return [event for event in self.event_exist if event.type == "Building"]
+    def building_queue_dict(self) -> list:
+        queue: list = {}
+        for event in self.event_list:
+            if event.type == "Building":
+                queue.append({"Name": event.name, 
+                              "Timedelta": event.format_lasting_time()})
+        return queue
 
 class Queue:
     def __init__(self, event_list: EventList) -> None:

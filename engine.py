@@ -210,9 +210,9 @@ class Game:
 
     def increment_house(self, check: bool) -> None:
         """ Add a house to production, will be added after some times """
-        if check and not self.event_list.event_exist("BuyHouse") and self.wood >= self.house_cost():
+        if check and self.wood >= self.house_cost():
             self.wood -= self.house_cost()
-            self.event_list.push(events.Event("BuyHouse", "Construction", counter = 1, minutes = self.house + 1))
+            self.event_list.push(events.Event("House", "Building", counter = 1, minutes = self.house + 1))
 
     def get_formatted_stats(self, stat: GameStats, precision: str = "low") -> str:
         """ Used for formatting stats, return a string for displaying the number """
@@ -256,3 +256,6 @@ class Game:
         if self.event_list.event_exist("WoodPlus"):
             mult = seconds * self.fps + tick
             self.event_list.select_event("WoodPlus").counter += mult * (0.2 + self.lumber_production() * 0.5 / self.fps)
+
+    def building_queue_dict(self) -> list:
+        return self.event_list.building_queue_dict()

@@ -27,7 +27,14 @@ class Ui:
         self.starting_position = (0, 0)
 
     def queue_image(self, name, time):
-        #self.house_time = assets.Image(assets.LARGE, (self.display_width * 0.273 - menu_w) / 2, 0, menu_w, large_h(menu_w), menu=2, textx = 0.58)
+        for building in self.game.building_queue_dict():
+            queue_item = assets.Image(assets.LARGE, (self.display_width * 0.273 - 275) / 2, 0, 275, 100, menu=2, textx = 0.58)
+        
+        self.house.draw(self.current_menu, self.house_time.picture)
+        self.house_time.draw(self.current_menu, self.building_frame.picture)
+
+
+
         return assets.Image(assets.LARGE, (self.display_width * 0.273 - 275) / 2, 0, 275, 100, 0, 0.4, menu=1)
 
     def init_images(self) -> None:
