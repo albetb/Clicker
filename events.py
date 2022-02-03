@@ -50,7 +50,6 @@ class Event:
         self.counter = counter # Not time related, eventually contains a number who give reward at the event end
         self.starting_time = now() # Don't change once is initialized except when loading game
         self.timedelta = timedelta(days = days, hours = hours, minutes = minutes, seconds = seconds) # Event duration
-            
 
     def set_starting_time(self, starting_time: str or datetime) -> None:
         """ Take a string o a datetime object and set it as current starting time """
@@ -59,10 +58,9 @@ class Event:
         elif isinstance(starting_time, datetime):
             self.starting_time = starting_time
 
-    def set_timedelta(self, timedelta_seconds: str) -> None:
+    def set_timedelta(self, timedelta_seconds: int) -> None:
         """ Set a new time delta to event """
-        if timedelta_seconds.isdigit():
-            self.timedelta = timedelta(seconds = int(timedelta_seconds))
+        self.timedelta = timedelta(seconds = timedelta_seconds)
 
     def ending_time(self) -> datetime:
         """ Return ending time of event """
@@ -70,7 +68,7 @@ class Event:
 
     def is_event_passed(self) -> bool:
         """ Return True if ending time of event is passed """
-        return now() >= self.ending_time() - timedelta(seconds = 1)
+        return self.starting_time != None and now() >= self.ending_time() - timedelta(seconds = 1)
 
     def lasting_time(self) -> timedelta:
         """ Return remaining time to end of event """
@@ -82,13 +80,11 @@ class Event:
 
     def add_time(self, days: int = 0, hours: int = 0, minutes: int = 0, seconds: int = 0) -> None:
         """ Add time to remaining time of event """
-        delta = timedelta(days = days, hours = hours, minutes = minutes, seconds = seconds)
-        self.timedelta = min(self.timedelta + delta, timedelta(days = 10, hours = 0, minutes = 0, seconds = 0))
+        self.timedelta = min(self.timedelta + timedelta(days = days, hours = hours, minutes = minutes, seconds = seconds), timedelta(days = 10))
 
     def subtract_time(self, days: int = 0, hours: int = 0, minutes: int = 0, seconds: int = 0) -> None:
         """ Remove time from remaining time of event """
-        delta = timedelta(days = days, hours = hours, minutes = minutes, seconds = seconds)
-        self.timedelta = max(self.timedelta - delta, timedelta(days = 0, hours = 0, minutes = 0, seconds = 0))
+        self.timedelta = max(self.timedelta - timedelta(days = days, hours = hours, minutes = minutes, seconds = seconds), timedelta(seconds = 0))
 
     def add_counter(self, value: float) -> None:
         """ Add a value to counter """
@@ -104,7 +100,7 @@ class Event:
             "timedelta": str(self.timedelta.seconds)
         }
 
-class EventList:
+class EventQueue:
     def __init__(self, event_list: list = []) -> None:
         self.event_list = event_list
 
@@ -116,23 +112,15 @@ class EventList:
                           counter = float(event_dict["counter"])
                         )
             event.set_starting_time(event_dict["starting_time"])
-            event.set_timedelta(event_dict["timedelta"])
+            event.set_timedelta(int(event_dict["timedelta"]))
             self.push(event)
     
     def serialize_event_list(self) -> None:
         """ Serialize event list as a list of dictionary """
         return [event.serialize_event() for event in self.event_list]
-                    
+
     def push(self, event: Event) -> None:
         """ Insert an event in list """
-        if event.type == "Building":
-            if self.event_type_exist("Building"):
-                total_lasting_time = 0
-                for event in self.building_queue():
-                    total_lasting_time += event.lasting_time().seconds
-                self.event.set_timedelta(self.event.timedelta.seconds + total_lasting_time)
-        elif self.event_exist(event.name):
-            self.remove(event.name)
         self.event_list.append(event)
 
     def remove_event(self, event: Event) -> None:
@@ -177,28 +165,30 @@ class EventList:
         return len([1 for event in self.event_list if event.name == event_name])
 
     def select_event(self, event_name: str) -> Event:
-        """ Given a name return first event with that name,
-            return an empty event if don't exist """
+        """ Given a name return first event with that name """
         for event in self.event_list:
             if event.name == event_name:
                 return event
-        return Event("")
 
-    def building_queue_dict(self) -> list:
-        queue: list = {}
-        for event in self.event_list:
-            if event.type == "Building":
-                queue.append({"Name": event.name, 
-                              "Timedelta": event.format_lasting_time()})
-        return queue
-
-class Queue:
-    def __init__(self, event_list: EventList) -> None:
-        self.list = [BuildingQueue(event.name, event.format_lasting_time()) for event in event_list if event.type == "Building"]
-
-class BuildingQueue:
-    def __init__(self, name: str, timedelta: str) -> None:
-        image = {
-            #"House": assets.Image(assets.HOUSE, , , , , menu=2)
+class BuildingEventQueue(EventQueue):
+    def __init__(self, event_list: list = []) -> None:
+        super().__init__(event_list)
+        self.max_running_events = 1
+        self.current_running_events = 0
         
-        }
+    def start_events(self):
+        for evt in self.event_list:
+            if self.current_running_events < self.max_running_events and evt.starting_time is None:
+                evt.starting_time = now()
+                self.current_running_events += 1
+
+    def push(self, event: Event) -> None:
+        super().push(event)
+        self.event_list.sort(key=lambda evt: evt.counter)
+        self.start_events()
+
+    def remove_event(self, event: Event) -> None:
+        super().remove_event(event)
+        if event.starting_time is not None:
+            self.current_running_events -= 1
+        self.start_events()

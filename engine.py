@@ -1,10 +1,19 @@
 from enum import Enum, unique
-import utils
 import events
+import json
+from math import log10, floor
 
 FRAME_PER_SECOND = 60
-OFFLINE_PRODUCTION_MULTIPLIER = 0.9
+OFFLINE_PRODUCTION_MULTIPLIER = 0.8
 MAX_OFFLINE_TIME = 60 * 60 * 24 # In seconds
+
+def load_game():
+    """ Load a game from a .txt file """
+    try:
+        with open('savegame.txt', 'r') as file:
+            return Game.deserialize(json.load(file))
+    except:
+        return Game()
 
 @unique
 class GameStats(str, Enum):
@@ -25,9 +34,9 @@ class Game:
         self.food = food
         self.wood = wood
         self.house = house
-        self.event_list = events.EventList()
+        self.event_list = events.EventQueue()
 
-        # Add a value to resources for offline production
+        # Offline production
         if self.time != "":
             offline_production = min(events.offline_time(self.time), MAX_OFFLINE_TIME) * self.fps * OFFLINE_PRODUCTION_MULTIPLIER
             self.food += self.harvester_production() * offline_production / self.fps
@@ -43,8 +52,14 @@ class Game:
     def save_current_time(self) -> None:
         """ Save current time as a formatted string in self.time """
         self.time = events.current_time()
-        
-    def serialize(self) -> str:
+
+    def save_game(self):
+        """ Save the current game to a .txt file as JSON """
+        with open('savegame.txt', 'w+') as file:
+            file.write(json.dumps(self.serialize()))
+
+    def serialize(self) -> dict:
+        """ Serialize game stats as a dictionary to save it in a JSON file """
         return {
             "population": self.population,
             "resource": {
@@ -64,6 +79,8 @@ class Game:
 
     @classmethod
     def deserialize(cls, data: str):
+        """ Deserialize game stats and return it as a Game class,
+            if there is some error load new game """
         try:
             if len(data) != 0:
                 population = data["population"]
@@ -94,49 +111,21 @@ class Game:
         """ Return food production PER SECOND from harvester minus population eating food """
         return self.production(GameStats.harvester) - 0.1 * self.population
 
-    def harvester_production_per_second(self) -> str:
-        """ Return a formatted string for displaying food production """
-        return utils.format_number(self.harvester_production(), "high") + "/s"
-
     def lumber_production(self) -> int:
         """ Return wood production PER SECOND from lumber """
         return self.production(GameStats.lumber) * 0.8
-
-    def lumber_production_per_second(self) -> str:
-        """ Return a formatted string for displaying wood production """
-        return utils.format_number(self.lumber_production(), "high") + "/s"
 
     def population_cost(self) -> int:
         """ Return cost in food for a unit of population """
         return int(round(50 * 1.1 ** self.population))
 
-    def format_population_cost(self) -> str:
-        """ Return population cost as a formatted string for displaying """
-        return utils.format_number(self.population_cost())
-
     def house_cost(self) -> int:
         """ Return cost in wood for a house """
         return int(round(1000 * 1.2 ** self.house))
-    
-    def format_house_cost(self) -> str:
-        """ Return house cost as a formatted string for displaying """
-        return f"{events.format_time_delta_str(minutes = (self.house + 1))} - {utils.format_number(self.house_cost())}"
 
     def population_limit(self) -> int:
         """ Return population limit """
         return int(10 * (1 + self.house))
-
-    def format_population_limit(self) -> str:
-        """ Return population limit as a formatted string for displaying """
-        return utils.format_number(self.population_limit())
-        
-    def format_harvester(self) -> str:
-        """ Return harvester as a formatted string for displaying """
-        return utils.format_number(self.harvester)
-
-    def format_lumber(self) -> str:
-        """ Return lumber as a formatted string for displaying """
-        return utils.format_number(self.lumber)
 
     def food_gathering(self, dry_run: bool = False) -> float:
         """ Add food when the central button is clicked, 
@@ -147,11 +136,6 @@ class Game:
             self.food += value
         return value
 
-    def format_food_gathering(self) -> str:
-        """ Return food produced form food gathering as a formatted string for displaying """
-        value = self.food_gathering(dry_run=True)
-        return utils.format_number(self.food_gathering(dry_run=True), "high")
-
     def wood_gathering(self) -> None:
         """ Add wood after a period of time, clicking again the button shorten that time,
             disable food gathering button, time delta is 2 min + 1 sec * lumberer """
@@ -160,8 +144,7 @@ class Game:
                 self.event_wood_plus_production(seconds = 2)
                 self.event_list.select_event("WoodPlus").subtract_time(seconds = 2)
             else:
-                time_delta_seconds = 2 * 60 + self.lumber
-                self.event_list.push(events.Event("WoodPlus", "Resources", seconds = time_delta_seconds))
+                self.event_list.push(events.Event("WoodPlus", "Resources", seconds = 2 * 60 + self.lumber))
 
     def autominer(self) -> None:
         """ Add food and wood for worker production, reduce food for people eating in harvester_production(),
@@ -169,10 +152,23 @@ class Game:
         self.food += self.harvester_production() / self.fps
         self.wood += self.lumber_production() / self.fps
         if self.food < -100:
+            self.food = 0
             self.population = max(0, self.population - 1)
-            self.food += 100
+            if self.harvester + self.lumber > self.population:
+                if self.lumber == max(self.harvester, self.lumber):
+                    self.lumber -= 1
+                elif self.harvester == max(self.harvester, self.lumber):
+                    self.harvester -= 1
 
     # ----------> Managing <----------------------------------------
+
+    def employed(self) -> int:
+        """ Return number of people working """
+        return int(self.harvester + self.lumber)
+
+    def unemployed(self) -> int:
+        """ Return number of people NOT working """
+        return int(self.population - self.employed())
 
     # Some function are made with this "for _ in range(num)" for working with fast buying when a button is long pressed
     def increment_population(self, num: int = 1) -> None:
@@ -184,63 +180,102 @@ class Game:
 
     def increment_harvester(self, num: int = 1) -> None:
         """ Add a number of people to harvester """
-        for _ in range(num):
-            self.harvester += self.population > self.harvester + self.lumber
+        self.harvester += min(self.unemployed(), int(num))
 
     def decrement_harvester(self, num: int = 1) -> None:
         """ Subtract a number of people to harvester """
-        for _ in range(num):
-            self.harvester -= self.harvester > 0
+        self.harvester -= min(self.harvester, int(num))
 
     def increment_lumber(self, num: int = 1) -> None:
         """ Add a number of people to lumber """
-        for _ in range(num):
-            if self.population > self.harvester + self.lumber:
-                self.lumber += 1
-                if self.event_list.event_exist("WoodPlus"):
-                    self.event_list.select_event("WoodPlus").add_time(seconds = 1)
+        lumber_plus = min(self.unemployed(), int(num))
+        self.lumber += lumber_plus
+        if self.event_list.event_exist("WoodPlus"):
+            self.event_list.select_event("WoodPlus").add_time(seconds = lumber_plus)
 
     def decrement_lumber(self, num: int = 1) -> None:
         """ Subtract a number of people to lumber """
-        for _ in range(num):
-            if self.lumber > 0:
-                self.lumber -= 1
-                if self.event_list.event_exist("WoodPlus"):
-                    self.event_list.select_event("WoodPlus").subtract_time(seconds = 1)
+        lumber_minus = min(self.lumber, int(num))
+        self.lumber -= lumber_minus
+        if self.event_list.event_exist("WoodPlus"):
+            self.event_list.select_event("WoodPlus").subtract_time(seconds = lumber_minus)
 
     def increment_house(self, check: bool) -> None:
         """ Add a house to production, will be added after some times """
-        if check and self.wood >= self.house_cost():
+        if check and self.wood >= self.house_cost() and not self.event_list.event_type_exist("Building"):
             self.wood -= self.house_cost()
             self.event_list.push(events.Event("House", "Building", counter = 1, minutes = self.house + 1))
 
-    def get_formatted_stats(self, stat: GameStats, precision: str = "low") -> str:
-        """ Used for formatting stats, return a string for displaying the number """
-        stats = {
-            GameStats.harvester: self.harvester,
-            GameStats.lumber: self.lumber,
-            GameStats.food: self.food,
-            GameStats.wood: self.wood,
-            GameStats.population: self.population
-        }
-        return utils.format_number(stats[stat], precision)
+    # ----------> Formatting <----------------------------------------
+
+    def format_food(self) -> str:
+        """ Return food as a formatted string for displaying """
+        return self.format_number(self.food)
+
+    def format_wood(self) -> str:
+        """ Return wood as a formatted string for displaying """
+        return self.format_number(self.wood)
+
+    def format_population(self) -> str:
+        """ Return population/max_populaation as a formatted string for displaying """
+        return f"{self.format_number(self.population)}/{self.format_population_limit()}"
+
+    def format_food_gathering(self) -> str:
+        """ Return food produced form food gathering as a formatted string for displaying """
+        return self.format_number(self.food_gathering(dry_run=True), "high")
+        
+    def format_harvester(self) -> str:
+        """ Return harvester as a formatted string for displaying """
+        return self.format_number(self.harvester)
+
+    def format_lumber(self) -> str:
+        """ Return lumber as a formatted string for displaying """
+        return self.format_number(self.lumber)
+
+    def format_harvester_production(self) -> str:
+        """ Return a formatted string for displaying food production """
+        return self.format_number(self.harvester_production(), "high") + "/s"
+
+    def format_lumber_production(self) -> str:
+        """ Return a formatted string for displaying wood production """
+        return self.format_number(self.lumber_production(), "high") + "/s"
+
+    def format_population_cost(self) -> str:
+        """ Return population cost as a formatted string for displaying """
+        return self.format_number(self.population_cost())
+
+    def format_population_limit(self) -> str:
+        """ Return population limit as a formatted string for displaying """
+        return self.format_number(self.population_limit())
+    
+    def format_house_cost(self) -> str:
+        """ Return house cost as a formatted string for displaying """
+        return f"{events.format_time_delta_str(minutes = (self.house + 1))} - {self.format_number(self.house_cost())}"
+        
+    def format_number(self, num: float, precision: str = "low") -> str:
+        """ Display a number with less decimal and with a literal notation (es 20k),
+            precision 'low' and 'high' determine number of decimal with number < 1000 """
+        if num < 1000 and (precision == "low" or num == round(num)):
+            return str(int(floor(num)))
+        suffix = "", "k", "M", "B", "T"
+        position = floor(log10(max(num, 1))) // 3
+        return f"{round(num / (10 ** (position * 3)), 2)}{suffix[position]}"
 
     # ----------> Events <----------------------------------------
 
     def manage_event(self) -> None:
         """ Manage event list every tick, for adding value to counter or checking if an event is expired """
-        if len(self.event_list.event_list) > 0:
-            if len(self.event_list.expired_event()) > 0:
-                for event in self.event_list.expired_event():
-                    if event.name == "WoodPlus":
-                        self.wood += event.counter
-                        self.event_list.push(events.Event("WoodPlusDebuff", "Debuff", seconds = 3)) # Can't reactivate gathering wood for 3 sec
-                    if event.name == "BuyHouse":
-                        self.house += event.counter
-                self.event_list.remove_expired()
+        if len(self.event_list.expired_event()) > 0:
+            for event in self.event_list.expired_event():
+                if event.name == "WoodPlus":
+                    self.wood += event.counter
+                    self.event_list.push(events.Event("WoodPlusDebuff", "Debuff", seconds = 3)) # Can't reactivate gathering wood for 3 sec
+                if event.name == "House":
+                    self.house += event.counter
+            self.event_list.remove_expired()
 
-            if self.event_list.event_exist("WoodPlus"):
-                self.event_wood_plus_production(tick = 1)
+        if self.event_list.event_exist("WoodPlus"):
+            self.event_wood_plus_production(tick = 1)
 
     def init_event(self) -> None:
         """ Init event at the start of the game, add value to counter for time passed """
@@ -254,8 +289,5 @@ class Game:
     def event_wood_plus_production(self, seconds: int = 0, tick: int = 0) -> None:
         """ Add value to counter of the wood gathering event, depends to the number of lumber """
         if self.event_list.event_exist("WoodPlus"):
-            mult = seconds * self.fps + tick
-            self.event_list.select_event("WoodPlus").counter += mult * (0.2 + self.lumber_production() * 0.5 / self.fps)
-
-    def building_queue_dict(self) -> list:
-        return self.event_list.building_queue_dict()
+            total_time = seconds * self.fps + tick
+            self.event_list.select_event("WoodPlus").counter += total_time * (0.2 + self.lumber_production() * 0.5 / self.fps)
