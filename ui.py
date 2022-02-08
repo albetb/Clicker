@@ -311,14 +311,17 @@ class Ui:
                 }
 
                 if len(self.game.event_list.building_queue()) > 0:
+                    self.building0.change()
                     building0 = self.game.event_list.building_queue()[0]
                     image[building0.name].draw(self.building0.picture)
                     self.building0.draw(self.building_frame.picture, text = building0.format_lasting_time())
                 if len(self.game.event_list.building_queue()) > 1:
+                    self.building1.change()
                     building1 = self.game.event_list.building_queue()[1]
                     image[building1.name].draw(self.building1.picture)
                     self.building1.draw(self.building_frame.picture, text = building1.format_lasting_time())
                 if len(self.game.event_list.building_queue()) > 2:
+                    self.building2.change()
                     building2 = self.game.event_list.building_queue()[2]
                     image[building2.name].draw(self.building2.picture)
                     self.building2.draw(self.building_frame.picture, text = building2.format_lasting_time())
