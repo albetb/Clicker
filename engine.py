@@ -121,7 +121,11 @@ class Game:
 
     def house_cost(self) -> int:
         """ Return cost in wood for a house """
-        return int(round(1000 * 1.2 ** self.house))
+        return int(round(1000 * 1.2 ** self.house_total()))
+
+    def house_total(self) -> int:
+        """ Return total house constructed + in construction """
+        return self.house + self.event_list.count_event_name("House")
 
     def population_limit(self) -> int:
         """ Return population limit """
@@ -170,7 +174,6 @@ class Game:
         """ Return number of people NOT working """
         return int(self.population - self.employed())
 
-    # Some function are made with this "for _ in range(num)" for working with fast buying when a button is long pressed
     def increment_population(self, num: int = 1) -> None:
         """ Add a number of people to total population, food will be subtracted """
         for _ in range(num):
@@ -202,9 +205,10 @@ class Game:
 
     def increment_house(self, check: bool) -> None:
         """ Add a house to production, will be added after some times """
-        if check and self.wood >= self.house_cost() and not self.event_list.event_type_exist("Building"):
+        if check and self.wood >= self.house_cost() and self.event_list.count_event_type("Building") < 3:
             self.wood -= self.house_cost()
-            self.event_list.push(events.Event("House", "Building", counter = 1, minutes = self.house + 1))
+            total_house = self.event_list.count_event_name("House") + self.house
+            self.event_list.push(events.Event("House", "Building", minutes = self.house_total() + 1))
 
     # ----------> Formatting <----------------------------------------
 
@@ -250,7 +254,7 @@ class Game:
     
     def format_house_cost(self) -> str:
         """ Return house cost as a formatted string for displaying """
-        return f"{events.format_time_delta_str(minutes = (self.house + 1))} - {self.format_number(self.house_cost())}"
+        return f"{events.format_time_delta_str(minutes = (self.house_total() + 1))} - {self.format_number(self.house_cost())}"
         
     def format_number(self, num: float, precision: str = "low") -> str:
         """ Display a number with less decimal and with a literal notation (es 20k),
@@ -271,7 +275,7 @@ class Game:
                     self.wood += event.counter
                     self.event_list.push(events.Event("WoodPlusDebuff", "Debuff", seconds = 3)) # Can't reactivate gathering wood for 3 sec
                 if event.name == "House":
-                    self.house += event.counter
+                    self.house += 1
             self.event_list.remove_expired()
 
         if self.event_list.event_exist("WoodPlus"):

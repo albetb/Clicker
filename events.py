@@ -18,6 +18,7 @@ def get_time(time_str: str) -> datetime:
 
 def set_time(time_obj: datetime) -> str:
     """ Return a formatted string form a datetime """
+    if time_obj == None: return ""
     return time_obj.strftime(TIME_FORMATTING)
 
 def format_time_delta(time_obj: timedelta) -> str:
@@ -46,7 +47,7 @@ def offline_time(time: str) -> int:
 class Event:
     def __init__(self, name: str, type: str = "", counter: float = 0, days: int = 0, hours: int = 0, minutes: int = 0, seconds: int = 0) -> None:
         self.name = name # Event name
-        self.type = type # Event type (eg. resouces or construction)
+        self.type = type # Event type (eg. Resources or Building)
         self.counter = counter # Not time related, eventually contains a number who give reward at the event end
         self.starting_time = now() # Don't change once is initialized except when loading game
         self.timedelta = timedelta(days = days, hours = hours, minutes = minutes, seconds = seconds) # Event duration
@@ -54,7 +55,10 @@ class Event:
     def set_starting_time(self, starting_time: str or datetime) -> None:
         """ Take a string o a datetime object and set it as current starting time """
         if isinstance(starting_time, str):
-            self.starting_time = get_time(starting_time)
+            if starting_time == "":
+                self.starting_time = None
+            else:
+                self.starting_time = get_time(starting_time)
         elif isinstance(starting_time, datetime):
             self.starting_time = starting_time
 
@@ -64,7 +68,7 @@ class Event:
 
     def ending_time(self) -> datetime:
         """ Return ending time of event """
-        return self.starting_time + self.timedelta
+        return (self.starting_time if self.starting_time != None else now()) + self.timedelta
 
     def is_event_passed(self) -> bool:
         """ Return True if ending time of event is passed """
@@ -76,6 +80,8 @@ class Event:
 
     def format_lasting_time(self) -> str:
         """ Return remaining time to end formatted for displaying """
+        if self.starting_time == None:
+            return format_time_delta(self.timedelta)
         return format_time_delta(max(self.lasting_time(), timedelta(seconds=0)))
 
     def add_time(self, days: int = 0, hours: int = 0, minutes: int = 0, seconds: int = 0) -> None:
@@ -121,11 +127,21 @@ class EventQueue:
 
     def push(self, event: Event) -> None:
         """ Insert an event in list """
+        if event.type == "Building":
+            event.counter = self.count_event_type("Building")
+            if event.counter > 0: # Block building if there is another one in construction
+                event.starting_time = None
         self.event_list.append(event)
 
     def remove_event(self, event: Event) -> None:
         """ Given an event remove that from list """
         self.event_list.remove(event)
+        if event.type == "Building":
+            for evt in self.event_list:
+                if evt.type == "Building":
+                    evt.counter -= 1
+                    if evt.counter == 0: # Start next building
+                        evt.starting_time = now()
 
     def remove(self, event_name: str) -> None:
         """ Given a name remove the first event with that name from list """
@@ -144,17 +160,11 @@ class EventQueue:
 
     def event_exist(self, event_name: str) -> bool:
         """ Given a name return True if exist an event with that name """
-        for event in self.event_list:
-            if event.name == event_name:
-                return True
-        return False
+        return self.count_event_name(event_name) > 0
 
     def event_type_exist(self, event_type: str) -> bool:
         """ Given a type return True if exist an event with that type """
-        for event in self.event_list:
-            if event.type == event_type:
-                return True
-        return False
+        return self.count_event_type(event_type) > 0
 
     def count_event_type(self, event_type: str) -> bool:
         """ Given a type return the number of event with that type """
@@ -166,29 +176,10 @@ class EventQueue:
 
     def select_event(self, event_name: str) -> Event:
         """ Given a name return first event with that name """
-        for event in self.event_list:
-            if event.name == event_name:
-                return event
+        return next((event for event in self.event_list if event.name == event_name), None)
 
-class BuildingEventQueue(EventQueue):
-    def __init__(self, event_list: list = []) -> None:
-        super().__init__(event_list)
-        self.max_running_events = 1
-        self.current_running_events = 0
-        
-    def start_events(self):
-        for evt in self.event_list:
-            if self.current_running_events < self.max_running_events and evt.starting_time is None:
-                evt.starting_time = now()
-                self.current_running_events += 1
-
-    def push(self, event: Event) -> None:
-        super().push(event)
-        self.event_list.sort(key=lambda evt: evt.counter)
-        self.start_events()
-
-    def remove_event(self, event: Event) -> None:
-        super().remove_event(event)
-        if event.starting_time is not None:
-            self.current_running_events -= 1
-        self.start_events()
+    def building_queue(self) -> list:
+        """ Return a list of all building events in order """
+        building_queue = [event for event in self.event_list if event.type == "Building"]
+        building_queue.sort(key=lambda event: event.counter)
+        return building_queue

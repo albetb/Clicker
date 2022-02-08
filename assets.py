@@ -58,7 +58,7 @@ def scale_image(surface: Surface,
 
 class Image:
     def __init__(self, path: str, x: float, y: float, w: float, h: float, 
-                 text: str = "", textx: float = 0.5, texty: float = 0.5) -> None:
+                 text: str = "", text_x: float = 0.5, text_y: float = 0.5, text_size: int = 25) -> None:
         self.path = path # Image relative path
         self.x = x # X positioning, if x ↑ image →
         self.y = y # Y positioning, if y ↑ image ↓
@@ -66,9 +66,9 @@ class Image:
         self.h = h # Image height
         self.clipping_area: Rect = None # Clipping area for not showing part of a button
         self.text = "" # Text of image
-        self.textx = textx # X positioning of text [0, 1], 1 is 100% right
-        self.texty = texty # Y positioning of text [0, 1], 1 is 100% down
-        self.textSize = 25 # Default text size
+        self.text_x = text_x # X positioning of text [0, 1], 1 is 100% right
+        self.text_y = text_y # Y positioning of text [0, 1], 1 is 100% down
+        self.textSize = text_size # Default text size
         self.textRect: Rect = None # Needed to display text
         self.text_clipping_area: Rect = None # Clipping area for not showing part of a button
 
@@ -81,21 +81,24 @@ class Image:
             self.text = Font(FONT, self.textSize).render(str(text), True, color)
             self.textRect = self.text.get_rect()
             avg = lambda xy, wh: (2 * xy + wh) / 2
-            self.textRect.center = (avg(self.x, self.w) - (0.5 - self.textx) * self.w, avg(self.y, self.h) - (self.textSize / 6) - (0.5 - self.texty) * self.h)
+            self.textRect.center = (avg(self.x, self.w) - (0.5 - self.text_x) * self.w, avg(self.y, self.h) - (self.textSize / 6) - (0.5 - self.text_y) * self.h)
     
     def set_text_size(self, textSize: float) -> None:
         """ Change default text size """
         self.textSize = textSize
 
     def change(self, path: str = "") -> None:
-        """ Change picture of image """
+        """ Change picture of image,
+            note that you have to change picture before drawing it """
         self.picture = scale_image(load_image(self.path if path == "" else path), (self.w, self.h))
 
-    def draw(self, display, clipping_area: tuple = None) -> None:
+    def draw(self, display, clipping_area: tuple = None, text = "") -> None:
         """ Display image on screen based on the menu,
             with clipping_area you can set clipping area """
         self.clipping_area = self.clipping_area if clipping_area == None else Rect(*clipping_area)
         display.blit(self.picture, (self.x, self.y), self.clipping_area)
+        if text != "":
+            self.set_text(text)
         if self.text != "":
             display.blit(self.text, self.textRect)
 
@@ -104,6 +107,6 @@ class Image:
         return self.x <= p[0] <= self.x + self.w and self.y <= p[1] <= self.y + self.h
 
     def move(self, right: float = 0, down: float = 0, lock: bool = False, max_w: float = 0, max_h: float = 0) -> None:
-        """ Move the image of right, down pixels """
+        """ Move the image of right →, down ↓ pixels """
         self.x = min(max(0, self.x + right), max_w - self.w) if lock else self.x + right
         self.y = min(max(0, self.y + down), max_h - self.h) if lock else self.y + down

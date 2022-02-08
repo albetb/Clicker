@@ -2,6 +2,21 @@ import pygame
 import assets
 from engine import load_game
 
+# Lambdas who calculate button heigth given width
+large_h = lambda large_w: int(round(large_w * 0.364, 0))
+tag_h = lambda large_w: int(round(large_w * 0.526, 0))
+square_h = lambda square_w: int(round(square_w * 1.09, 0))
+round_h = lambda round_w: int(round(round_w * 1.03, 0))
+arrow_h = lambda round_w: int(round(round_w * 1.25, 0))
+
+# Base button width and position
+RESOURCE = 190
+PRODUCTION = RESOURCE * 0.9
+FOOD = 200
+MENU = 275
+ARROW = 80
+WORKER_X, WORKER_Y = 70, 280
+
 class Ui:
     EXPLORE = 0
     MANAGE = 1
@@ -11,9 +26,9 @@ class Ui:
         pygame.init()
         self.clock = pygame.time.Clock()
 
-        self.display_width = 1024
-        self.display_height = self.display_width * 3 // 4 # Display aspect ratio 4:3
-        self.display = pygame.display.set_mode((self.display_width, self.display_height))
+        self.W = 1024 # Width
+        self.H = self.W * 3 // 4 # Height, display aspect ratio 4:3
+        self.display = pygame.display.set_mode((self.W, self.H))
         pygame.display.set_caption("Clicker")
 
         self.init_images()
@@ -27,56 +42,41 @@ class Ui:
 
     def init_images(self) -> None:
         """ Initialize image """
-        self.background = assets.Image(assets.BACKGROUND_EXPLORE, 0, 0, self.display_width, self.display_height)
-        # Lambdas who calculate button heigth given width
-        large_h = lambda large_w: large_w * 100 // 275
-        tag_h = lambda large_w: large_w * 100 // 190
-        square_h = lambda square_w: square_w * 109 // 100
-        round_h = lambda round_w: round_w * 103 // 100
-        arrow_h = lambda round_w: round_w * 100 // 80
+        self.background = assets.Image(assets.BACKGROUND_EXPLORE, 0, 0, self.W, self.H)
         # Central button, give food when clicked
-        food_w = 200
-        self.food_button = assets.Image(assets.SQUARE_PLUS_FOOD, (self.display_width - food_w) / 2, (self.display_height - square_h(food_w)) / 2, square_h(food_w), food_w, 0, 0.5, 0.68)
+        self.food_button = assets.Image(assets.SQUARE_PLUS_FOOD, (self.W - FOOD) / 2, (self.H - square_h(FOOD)) / 2, square_h(FOOD), FOOD, 0, 0.5, 0.68)
         # Wood button
-        self.wood_timer = assets.Image(assets.LARGE, self.display_width * 0.7 + food_w * 0.25, (self.display_height - square_h(food_w)) / 2 + (round_h(food_w * 0.5) - large_h(food_w * 0.8)) / 2, food_w * 0.8, large_h(food_w * 0.8), "", 0.58, 0.55)
-        self.wood_button = assets.Image(assets.ROUND_WOOD, self.display_width * 0.7, (self.display_height - square_h(food_w)) / 2, food_w * 0.5, round_h(food_w * 0.5))
+        self.wood_timer = assets.Image(assets.LARGE, self.W * 0.7 + FOOD * 0.25, (self.H - square_h(FOOD)) / 2 + (round_h(FOOD * 0.5) - large_h(FOOD * 0.8)) / 2, FOOD * 0.8, large_h(FOOD * 0.8), "", 0.58, 0.55)
+        self.wood_button = assets.Image(assets.ROUND_WOOD, self.W * 0.7, (self.H - square_h(FOOD)) / 2, FOOD * 0.5, round_h(FOOD * 0.5))
         # Bottom menu button
-        menu_w = 275
-        self.manage_menu = assets.Image(assets.LARGE, (self.display_width - 3 * menu_w) // 4, self.display_height - large_h(menu_w) - 20, menu_w, large_h(menu_w), "Manage")
-        self.explore_menu = assets.Image(assets.LARGE, (self.display_width - 3 * menu_w) * 2 // 4 + menu_w, self.display_height - large_h(menu_w) - 20, menu_w, large_h(menu_w), "Explore")
-        self.city_menu = assets.Image(assets.LARGE, (self.display_width - 3 * menu_w) * 3 // 4 + 2 * menu_w, self.display_height - large_h(menu_w) - 20, menu_w, large_h(menu_w), "City")
-        self.manage_menu.set_text_size(30)
-        self.explore_menu.set_text_size(30)
-        self.city_menu.set_text_size(30)
+        self.manage_menu = assets.Image(assets.LARGE, (self.W - 3 * MENU) // 4, self.H - large_h(MENU) - 20, MENU, large_h(MENU), "Manage", text_size=30)
+        self.explore_menu = assets.Image(assets.LARGE, (self.W - 3 * MENU) * 2 // 4 + MENU, self.H - large_h(MENU) - 20, MENU, large_h(MENU), "Explore", text_size=30)
+        self.city_menu = assets.Image(assets.LARGE, (self.W - 3 * MENU) * 3 // 4 + 2 * MENU, self.H - large_h(MENU) - 20, MENU, large_h(MENU), "City", text_size=30)
         # Tag with current resources
-        resource_w = 190
-        production_w = resource_w * 0.9
-        self.food_tag = assets.Image(assets.TAG_FOOD, (self.display_width - 3 * 1.5 * resource_w) // 4, 20, resource_w, tag_h(resource_w), 0, 0.4, 0.45)
-        self.food_prod_tag = assets.Image(assets.LARGE, (self.display_width - 3 * 1.5 * resource_w) // 4 + resource_w * 0.7, 30, production_w, large_h(production_w), 0, 0.65, 0.55)
-        self.food_prod_tag.set_text_size(22)
-        self.teg_wood = assets.Image(assets.TAG_WOOD, (self.display_width - 3 * 1.5 * resource_w) * 2 // 4 + 1.5 * resource_w, 20, resource_w, tag_h(resource_w), 0, 0.4, 0.45)
-        self.wood_prod_tag = assets.Image(assets.LARGE, (self.display_width - 3 * 1.5 * resource_w) * 2 // 4 + 1.5 * resource_w + resource_w * 0.7, 30, production_w, large_h(production_w), 0, 0.65, 0.55)
-        self.wood_prod_tag.set_text_size(22)
-        self.tag_population = assets.Image(assets.TAG_POPULATION, (self.display_width - 3 * 1.5 * resource_w) // 4, 20 + 15 + tag_h(resource_w), resource_w, tag_h(resource_w), 0, 0.4, 0.45)
+        self.food_tag = assets.Image(assets.TAG_FOOD, (self.W - 4.5 * RESOURCE) // 4, 20, RESOURCE, tag_h(RESOURCE), 0, 0.4, 0.45)
+        self.food_prod_tag = assets.Image(assets.LARGE, (self.W - 4.5 * RESOURCE) // 4 + RESOURCE * 0.7, 30, PRODUCTION, large_h(PRODUCTION), 0, 0.65, 0.55, text_size=22)
+        self.wood_tag = assets.Image(assets.TAG_WOOD, (self.W - 4.5 * RESOURCE) * 2 // 4 + 1.5 * RESOURCE, 20, RESOURCE, tag_h(RESOURCE), 0, 0.4, 0.45)
+        self.wood_prod_tag = assets.Image(assets.LARGE, (self.W - 4.5 * RESOURCE) * 2 // 4 + RESOURCE * 2.2, 30, PRODUCTION, large_h(PRODUCTION), 0, 0.65, 0.55, text_size=22)
+        self.tag_population = assets.Image(assets.TAG_POPULATION, (self.W - 4.5 * RESOURCE) // 4, 20 + 15 + tag_h(RESOURCE), RESOURCE, tag_h(RESOURCE), 0, 0.4, 0.45)
         # Buy population button and cost
-        arrow_w = 80
-        self.pop_plus = assets.Image(assets.RIGHT_ARROW_PLUS, (self.display_width - 3 * 1.5 * resource_w) // 4 + resource_w + 15 + menu_w * 0.85 + 7, 20 + 15 + 9 + tag_h(resource_w), arrow_w * 0.7, arrow_h(arrow_w * 0.7))
-        self.pop_cost = assets.Image(assets.LARGE_FOOD, (self.display_width - 3 * 1.5 * resource_w) // 4 + resource_w + 15, 20 + 15 + tag_h(resource_w), menu_w * 0.85, large_h(menu_w * 0.85), 0, 0.4)
+        self.pop_plus = assets.Image(assets.RIGHT_ARROW_PLUS, (self.W - 4.5 * RESOURCE) // 4 + RESOURCE + 15 + MENU * 0.85 + 7, tag_h(RESOURCE) + 44, ARROW * 0.7, arrow_h(ARROW * 0.7))
+        self.pop_cost = assets.Image(assets.LARGE_FOOD, (self.W - 4.5 * RESOURCE) // 4 + RESOURCE + 15, tag_h(RESOURCE) + 35, MENU * 0.85, large_h(MENU * 0.85), 0, 0.4)
         # Worker menu
-        worker_x, worker_y = 70, 280
-        self.harvester_tag = assets.Image(assets.LARGE_HARVESTER, worker_x, worker_y, menu_w, large_h(menu_w), 0, 0.4)
-        self.harvester_minus = assets.Image(assets.LEFT_ARROW_MINUS, worker_x + menu_w + 8, worker_y, arrow_w, arrow_h(arrow_w))
-        self.harvester_plus = assets.Image(assets.RIGHT_ARROW_PLUS, worker_x + menu_w + arrow_w + 8 * 2, worker_y, arrow_w, arrow_h(arrow_w))
-        self.lumber_tag = assets.Image(assets.LARGE_LUMBERER, worker_x, worker_y + large_h(menu_w) + 10, menu_w, large_h(menu_w), 0, 0.4)
-        self.lumber_minus = assets.Image(assets.LEFT_ARROW_MINUS, worker_x + menu_w + 8, worker_y + large_h(menu_w) + 10, arrow_w, arrow_h(arrow_w))
-        self.lumber_plus = assets.Image(assets.RIGHT_ARROW_PLUS, worker_x + menu_w + arrow_w + 8 * 2, worker_y + large_h(menu_w) + 10, arrow_w, arrow_h(arrow_w))
+        self.harvester_tag = assets.Image(assets.LARGE_HARVESTER, WORKER_X, WORKER_Y, MENU, large_h(MENU), 0, 0.4)
+        self.harvester_minus = assets.Image(assets.LEFT_ARROW_MINUS, WORKER_X + MENU + 8, WORKER_Y, ARROW, arrow_h(ARROW))
+        self.harvester_plus = assets.Image(assets.RIGHT_ARROW_PLUS, WORKER_X + MENU + ARROW + 12, WORKER_Y, ARROW, arrow_h(ARROW))
+        self.lumber_tag = assets.Image(assets.LARGE_LUMBERER, WORKER_X, WORKER_Y + large_h(MENU) + 10, MENU, large_h(MENU), 0, 0.4)
+        self.lumber_minus = assets.Image(assets.LEFT_ARROW_MINUS, WORKER_X + MENU + 8, WORKER_Y + large_h(MENU) + 10, ARROW, arrow_h(ARROW))
+        self.lumber_plus = assets.Image(assets.RIGHT_ARROW_PLUS, WORKER_X + MENU + ARROW + 12, WORKER_Y + large_h(MENU) + 10, ARROW, arrow_h(ARROW))
         # City menu
-        self.building_frame = assets.Image(assets.FRAME, self.display_width * 0.625, self.display_height * 0.336, self.display_width * 0.273, self.display_height * 0.439)
-        self.square_house = assets.Image(assets.SQUARE_HOUSE, worker_x, worker_y - 4, arrow_w * 1.3, square_h(arrow_w * 1.3), 0, 0.5, 0.46)
-        self.house_cost = assets.Image(assets.LARGE_WOOD, worker_x + arrow_w * 1.3 + 8, worker_y, menu_w, large_h(menu_w), 0, 0.37)
-        self.house_plus = assets.Image(assets.RIGHT_ARROW_PLUS, worker_x + arrow_w * 1.3 + menu_w + 2*  8, worker_y, arrow_w, arrow_h(arrow_w))
-        self.house_time = assets.Image(assets.LARGE, (self.display_width * 0.273 - menu_w) / 2, 0, menu_w, large_h(menu_w), textx = 0.58)
-        self.house = assets.Image(assets.HOUSE, large_h(menu_w) * 0.125, large_h(menu_w) * 0.125, large_h(menu_w) * 0.75, large_h(menu_w) * 0.75)
+        self.building_frame = assets.Image(assets.FRAME, self.W * 0.625, self.H * 0.336, self.W * 0.273, self.H * 0.439)
+        self.square_house = assets.Image(assets.SQUARE_HOUSE, WORKER_X, WORKER_Y - 4, ARROW * 1.3, square_h(ARROW * 1.3), 0, 0.5, 0.46)
+        self.house_cost = assets.Image(assets.LARGE_WOOD, WORKER_X + ARROW * 1.3 + 8, WORKER_Y, MENU, large_h(MENU), 0, 0.37)
+        self.house_plus = assets.Image(assets.RIGHT_ARROW_PLUS, WORKER_X + ARROW * 1.3 + MENU + 2*  8, WORKER_Y, ARROW, arrow_h(ARROW))
+        self.building0 = assets.Image(assets.LARGE, (self.W * 0.273 - MENU) / 2, 0, MENU, large_h(MENU), text_x = 0.58)
+        self.building1 = assets.Image(assets.LARGE, (self.W * 0.273 - MENU) / 2, large_h(MENU) + 5, MENU, large_h(MENU), text_x = 0.58)
+        self.building2 = assets.Image(assets.LARGE, (self.W * 0.273 - MENU) / 2, 2 * large_h(MENU) + 10, MENU, large_h(MENU), text_x = 0.58)
+        self.house = assets.Image(assets.HOUSE, large_h(MENU) * 0.125, large_h(MENU) * 0.125, large_h(MENU) * 0.75, large_h(MENU) * 0.75)
 
     def run(self) -> None:
         """ Core loop of the game """
@@ -140,18 +140,13 @@ class Ui:
     def draw_counters(self) -> None:
         """ Update resources and production counter """
         # Food counter
-        self.food_prod_tag.set_text(self.game.format_harvester_production())
-        self.food_tag.set_text(self.game.format_food())
-        self.food_prod_tag.draw(self.display)
-        self.food_tag.draw(self.display)
+        self.food_prod_tag.draw(self.display, text = self.game.format_harvester_production())
+        self.food_tag.draw(self.display, text = self.game.format_food())
         # Wood counter
-        self.wood_prod_tag.set_text(self.game.format_lumber_production())
-        self.teg_wood.set_text(self.game.format_wood())
-        self.wood_prod_tag.draw(self.display)
-        self.teg_wood.draw(self.display)
+        self.wood_prod_tag.draw(self.display, text = self.game.format_lumber_production())
+        self.wood_tag.draw(self.display, text = self.game.format_wood())
         # Population counter
-        self.tag_population.set_text(self.game.format_population())
-        self.tag_population.draw(self.display)
+        self.tag_population.draw(self.display, text = self.game.format_population())
 
     # --------------------> 🔭 EXPLORE 🔭 <---------------------------------------------
 
@@ -176,8 +171,7 @@ class Ui:
             
             ## Wood+ button and timer
             if self.game.event_list.event_exist("WoodPlus"):
-                self.wood_timer.set_text(self.game.event_list.select_event("WoodPlus").format_lasting_time())
-                self.wood_timer.draw(self.display)
+                self.wood_timer.draw(self.display, text = self.game.event_list.select_event("WoodPlus").format_lasting_time())
                 self.food_button.change(assets.SQUARE_PLUS_FOOD_DISABLED)
                 self.food_button.set_text(self.game.format_food_gathering(), (97, 83, 74)) # Set text grey
             else:
@@ -226,18 +220,15 @@ class Ui:
         if self.current_menu == self.MANAGE:
 
             ## Harvester buttons
-            self.harvester_tag.set_text(self.game.format_harvester())
-            self.harvester_tag.draw(self.display)
+            self.harvester_tag.draw(self.display, text = self.game.format_harvester())
             self.harvester_plus.draw(self.display)
             self.harvester_minus.draw(self.display)
             ## Lumber buttons
-            self.lumber_tag.set_text(self.game.format_lumber())
-            self.lumber_tag.draw(self.display)
+            self.lumber_tag.draw(self.display, text = self.game.format_lumber())
             self.lumber_plus.draw(self.display)
             self.lumber_minus.draw(self.display)
             ## Population+ button and cost
-            self.pop_cost.set_text(self.game.format_population_cost())
-            self.pop_cost.draw(self.display)
+            self.pop_cost.draw(self.display, text = self.game.format_population_cost())
             self.pop_plus.draw(self.display)
             
     # --------------------> 🏡 CITY 🏡 <---------------------------------------------
@@ -246,13 +237,15 @@ class Ui:
         """ Executed at the start of every loop in the city menu """
         if self.current_menu == self.CITY:
 
+            y_mov = 0
             if self.starting_position != (0, 0):
                 y_mov = self.mouse[1] - self.starting_position[1] # If y_mov up image down
-                self.house_time.move(down = y_mov, lock = True, max_w = self.building_frame.w, max_h = self.building_frame.h)
                 self.starting_position = self.mouse
-            elif self.house_time.y > 0:
-                y_mov = -1 * max(self.house_time.y / 5, 1) # Slowly pushes queue up
-                self.house_time.move(down = y_mov, lock = True, max_w = self.building_frame.w, max_h = self.building_frame.h)
+            elif self.building0.y > 0:
+                y_mov = -1 * max(self.building1.y / 5, 1) # Slowly pushes queue up
+            self.building0.move(down = y_mov, lock = True, max_w = self.building_frame.w, max_h = self.building_frame.h)
+            self.building1.y = self.building0.y + self.building0.h + 5
+            self.building2.y = self.building1.y + self.building1.h + 5
 
     def event_city_menu(self, event: pygame.event) -> None:
         """ Manage user event in the city menu """
@@ -271,18 +264,29 @@ class Ui:
         if self.current_menu == self.CITY:
 
             self.building_frame.change()
-            self.square_house.set_text(int(self.game.house))
-            self.house_cost.set_text(self.game.format_house_cost())
-            self.square_house.draw(self.display)
-            self.house_cost.draw(self.display)
-
-            if self.game.event_list.event_exist("House"):
-                self.house_time.set_text(self.game.event_list.select_event("House").format_lasting_time())
-                self.house.draw(self.house_time.picture)
-                self.house_time.draw(self.building_frame.picture)
-                self.house_plus.change(assets.RIGHT_ARROW_PLUS_DISABLED)
-            else:
-                self.house_plus.change(assets.RIGHT_ARROW_PLUS)
-
-            self.building_frame.draw(self.display)
+            house_enabled = (self.game.wood >= self.game.house_cost() and self.game.event_list.count_event_type("Building") < 3)
+            self.house_plus.change(assets.RIGHT_ARROW_PLUS if house_enabled else assets.RIGHT_ARROW_PLUS_DISABLED)
+            
+            self.square_house.draw(self.display, text = int(self.game.house))
+            self.house_cost.draw(self.display, text = self.game.format_house_cost())
             self.house_plus.draw(self.display)
+
+            if self.game.event_list.event_type_exist("Building"):
+                image = {
+                    "House": self.house
+                }
+                
+                if len(self.game.event_list.building_queue()) > 0:
+                    building0 = self.game.event_list.building_queue()[0]
+                    image[building0.name].draw(self.building0.picture)
+                    self.building0.draw(self.building_frame.picture, text = building0.format_lasting_time())
+                if len(self.game.event_list.building_queue()) > 1:
+                    building1 = self.game.event_list.building_queue()[1]
+                    image[building1.name].draw(self.building1.picture)
+                    self.building1.draw(self.building_frame.picture, text = building1.format_lasting_time())
+                if len(self.game.event_list.building_queue()) > 2:
+                    building2 = self.game.event_list.building_queue()[2]
+                    image[building2.name].draw(self.building2.picture)
+                    self.building2.draw(self.building_frame.picture, text = building2.format_lasting_time())
+
+                self.building_frame.draw(self.display)
