@@ -23,9 +23,11 @@ class GameStats(str, Enum):
     lumber = "lumber"
     population = "population"
     house = "house"
+    granary = "granary"
+    storage = "storage"
 
 class Game:
-    def __init__(self, population: int = 0, food: float = 0, wood: float = 0, harvester: int = 0, lumber: int = 0, house: int = 0, time: str = "", event_list = "") -> None:
+    def __init__(self, population: int = 0, food: float = 0, wood: float = 0, harvester: int = 0, lumber: int = 0, house: int = 0, granary: int = 0, storage: int = 0, time: str = "", event_list = "") -> None:
         self.fps = FRAME_PER_SECOND
         self.population = population
         self.time = time
@@ -34,6 +36,8 @@ class Game:
         self.food = food
         self.wood = wood
         self.house = house
+        self.granary = granary
+        self.storage = storage
         self.event_list = events.EventQueue()
 
         # Offline production
@@ -67,7 +71,9 @@ class Game:
                 "wood": self.wood
                 },
             "building": {
-                "house": self.house
+                "house": self.house,
+                "granary": self.granary,
+                "storage": self.storage
                 },
             "occupation": {
                 "harvester": self.harvester,
@@ -89,16 +95,18 @@ class Game:
                 harvester = data["occupation"]["harvester"]
                 lumber = data["occupation"]["lumber"]
                 house = data["building"]["house"]
+                granary = data["building"]["granary"]
+                storage = data["building"]["storage"]
                 time = data["time"]
                 event_list = data["event_list"]
-                return cls(population, food, wood, harvester, lumber, house, time, event_list)
+                return cls(population, food, wood, harvester, lumber, house, granary, storage, time, event_list)
         except:
             pass
         return cls()
 
     # ----------> Production <----------------------------------------
 
-    def production(self, stat: GameStats) -> int:
+    def production(self, stat: GameStats) -> float:
         """ Base function for worker production calculation, 
             return production PER SECOND for a resource """
         stats = {
@@ -107,11 +115,11 @@ class Game:
         }
         return stats[stat] ** 1.05 * (1 + (stats[stat] // 10) * 0.5)
 
-    def harvester_production(self) -> int:
+    def harvester_production(self) -> float:
         """ Return food production PER SECOND from harvester minus population eating food """
         return self.production(GameStats.harvester) - 0.1 * self.population
 
-    def lumber_production(self) -> int:
+    def lumber_production(self) -> float:
         """ Return wood production PER SECOND from lumber """
         return self.production(GameStats.lumber) * 0.8
 
@@ -127,9 +135,33 @@ class Game:
         """ Return total house constructed + in construction """
         return self.house + self.event_list.count_event_name("House")
 
+    def granary_cost(self) -> int:
+        """ Return cost in wood for a granary """
+        return int(round(3000 * 1.2 ** self.granary_total()))
+
+    def granary_total(self) -> int:
+        """ Return total granary constructed + in construction """
+        return self.granary + self.event_list.count_event_name("Granary")
+
+    def storage_cost(self) -> int:
+        """ Return cost in wood for a storage """
+        return int(round(8000 * (1 + self.storage_total())))
+
+    def storage_total(self) -> int:
+        """ Return total storage constructed + in construction """
+        return self.storage + self.event_list.count_event_name("Storage")
+
     def population_limit(self) -> int:
         """ Return population limit """
         return int(10 * (1 + self.house))
+
+    def food_limit(self) -> int:
+        """ Return food limit """
+        return int(round((1 + self.granary) ** 1.5) * 1000)
+
+    def wood_limit(self) -> int:
+        """ Return wood limit """
+        return int(10000 * (1 + self.storage))
 
     def food_gathering(self, dry_run: bool = False) -> float:
         """ Add food when the central button is clicked, 
@@ -153,8 +185,8 @@ class Game:
     def autominer(self) -> None:
         """ Add food and wood for worker production, reduce food for people eating in harvester_production(),
             if food < -100 population is reduced """
-        self.food += self.harvester_production() / self.fps
-        self.wood += self.lumber_production() / self.fps
+        self.food = min(self.food + self.harvester_production() / self.fps, self.food_limit())
+        self.wood = min(self.wood + self.lumber_production() / self.fps, self.wood_limit())
         if self.food < -100:
             self.food = 0
             self.population = max(0, self.population - 1)
@@ -207,18 +239,29 @@ class Game:
         """ Add a house to production, will be added after some times """
         if check and self.wood >= self.house_cost() and self.event_list.count_event_type("Building") < 3:
             self.wood -= self.house_cost()
-            total_house = self.event_list.count_event_name("House") + self.house
             self.event_list.push(events.Event("House", "Building", minutes = self.house_total() + 1))
+
+    def increment_granary(self, check: bool) -> None:
+        """ Add a granary to production, will be added after some times """
+        if check and self.wood >= self.granary_cost() and self.event_list.count_event_type("Building") < 3:
+            self.wood -= self.granary_cost()
+            self.event_list.push(events.Event("Granary", "Building", minutes = (self.granary_total() * 1.5) + 1))
+
+    def increment_storage(self, check: bool) -> None:
+        """ Add a storage to production, will be added after some times """
+        if check and self.wood >= self.storage_cost() and self.event_list.count_event_type("Building") < 3:
+            self.wood -= self.storage_cost()
+            self.event_list.push(events.Event("Storage", "Building", minutes = (self.storage_total() + 1) * 5))
 
     # ----------> Formatting <----------------------------------------
 
     def format_food(self) -> str:
         """ Return food as a formatted string for displaying """
-        return self.format_number(self.food)
+        return f"{self.format_number(min(self.food, self.food_limit()))}/{self.format_number(self.food_limit())}"
 
     def format_wood(self) -> str:
         """ Return wood as a formatted string for displaying """
-        return self.format_number(self.wood)
+        return f"{self.format_number(min(self.wood, self.wood_limit()))}/{self.format_number(self.wood_limit())}"
 
     def format_population(self) -> str:
         """ Return population/max_populaation as a formatted string for displaying """
@@ -255,6 +298,14 @@ class Game:
     def format_house_cost(self) -> str:
         """ Return house cost as a formatted string for displaying """
         return f"{events.format_time_delta_str(minutes = (self.house_total() + 1))} - {self.format_number(self.house_cost())}"
+
+    def format_granary_cost(self) -> str:
+        """ Return granary cost as a formatted string for displaying """
+        return f"{events.format_time_delta_str(minutes = (self.granary_total() * 1.5) + 2)} - {self.format_number(self.granary_cost())}"
+
+    def format_storage_cost(self) -> str:
+        """ Return storage cost as a formatted string for displaying """
+        return f"{events.format_time_delta_str(minutes = (self.storage_total() + 1) * 5)} - {self.format_number(self.storage_cost())}"
         
     def format_number(self, num: float, precision: str = "low") -> str:
         """ Display a number with less decimal and with a literal notation (es 20k),
@@ -274,8 +325,12 @@ class Game:
                 if event.name == "WoodPlus":
                     self.wood += event.counter
                     self.event_list.push(events.Event("WoodPlusDebuff", "Debuff", seconds = 3)) # Can't reactivate gathering wood for 3 sec
-                if event.name == "House":
+                elif event.name == "House":
                     self.house += 1
+                elif event.name == "Granary":
+                    self.granary += 1
+                elif event.name == "Storage":
+                    self.storage += 1
             self.event_list.remove_expired()
 
         if self.event_list.event_exist("WoodPlus"):

@@ -4,18 +4,23 @@ from engine import load_game
 
 # Lambdas who calculate button heigth given width
 large_h = lambda large_w: int(round(large_w * 0.364, 0))
+medium_h = lambda large_w: int(round(large_w * 0.434, 0))
 tag_h = lambda large_w: int(round(large_w * 0.526, 0))
 square_h = lambda square_w: int(round(square_w * 1.09, 0))
 round_h = lambda round_w: int(round(round_w * 1.03, 0))
 arrow_h = lambda round_w: int(round(round_w * 1.25, 0))
 
 # Base button width and position
-RESOURCE = 190
-PRODUCTION = RESOURCE * 0.9
+RESOURCE = 230
+PRODUCTION = RESOURCE * 0.6
 FOOD = 200
 MENU = 275
 ARROW = 80
 WORKER_X, WORKER_Y = 70, 280
+
+# Color
+BLACK = (0, 0, 0)
+GREY = (97, 83, 74)
 
 class Ui:
     EXPLORE = 0
@@ -53,14 +58,14 @@ class Ui:
         self.explore_menu = assets.Image(assets.LARGE, (self.W - 3 * MENU) * 2 // 4 + MENU, self.H - large_h(MENU) - 20, MENU, large_h(MENU), "Explore", text_size=30)
         self.city_menu = assets.Image(assets.LARGE, (self.W - 3 * MENU) * 3 // 4 + 2 * MENU, self.H - large_h(MENU) - 20, MENU, large_h(MENU), "City", text_size=30)
         # Tag with current resources
-        self.food_tag = assets.Image(assets.TAG_FOOD, (self.W - 4.5 * RESOURCE) // 4, 20, RESOURCE, tag_h(RESOURCE), 0, 0.4, 0.45)
-        self.food_prod_tag = assets.Image(assets.LARGE, (self.W - 4.5 * RESOURCE) // 4 + RESOURCE * 0.7, 30, PRODUCTION, large_h(PRODUCTION), 0, 0.65, 0.55, text_size=22)
-        self.wood_tag = assets.Image(assets.TAG_WOOD, (self.W - 4.5 * RESOURCE) * 2 // 4 + 1.5 * RESOURCE, 20, RESOURCE, tag_h(RESOURCE), 0, 0.4, 0.45)
-        self.wood_prod_tag = assets.Image(assets.LARGE, (self.W - 4.5 * RESOURCE) * 2 // 4 + RESOURCE * 2.2, 30, PRODUCTION, large_h(PRODUCTION), 0, 0.65, 0.55, text_size=22)
-        self.tag_population = assets.Image(assets.TAG_POPULATION, (self.W - 4.5 * RESOURCE) // 4, 20 + 15 + tag_h(RESOURCE), RESOURCE, tag_h(RESOURCE), 0, 0.4, 0.45)
+        self.food_tag = assets.Image(assets.LARGE_FOOD, 0.03 * self.W, 0.03 * self.H, RESOURCE, large_h(RESOURCE), 0, text_x=0.4, text_size=23)
+        self.food_prod_tag = assets.Image(assets.TAG, 0.03 * self.W + RESOURCE * 0.1, 0.03 * self.H + tag_h(PRODUCTION) * 0.82, PRODUCTION, tag_h(PRODUCTION), 0, text_x = 0.44, text_y = 0.53, text_size=18)
+        self.wood_tag = assets.Image(assets.LARGE_WOOD, 0.06 * self.W + RESOURCE, 0.03 * self.H, RESOURCE, large_h(RESOURCE), 0, text_x=0.4, text_size=23)
+        self.wood_prod_tag = assets.Image(assets.TAG, 0.06 * self.W + RESOURCE + RESOURCE * 0.1, 0.03 * self.H + tag_h(PRODUCTION) * 0.82, PRODUCTION, tag_h(PRODUCTION), 0, text_x = 0.44, text_y = 0.53, text_size=18)
+        self.tag_population = assets.Image(assets.MEDIUM_POPULATION, 0.03 * self.W, tag_h(RESOURCE) + 40, RESOURCE * 0.85, medium_h(RESOURCE * 0.85), 0, 0.45)
         # Buy population button and cost
-        self.pop_plus = assets.Image(assets.RIGHT_ARROW_PLUS, (self.W - 4.5 * RESOURCE) // 4 + RESOURCE + 15 + MENU * 0.85 + 7, tag_h(RESOURCE) + 44, ARROW * 0.7, arrow_h(ARROW * 0.7))
-        self.pop_cost = assets.Image(assets.LARGE_FOOD, (self.W - 4.5 * RESOURCE) // 4 + RESOURCE + 15, tag_h(RESOURCE) + 35, MENU * 0.85, large_h(MENU * 0.85), 0, 0.4)
+        self.pop_cost = assets.Image(assets.LARGE_FOOD, 0.03 * self.W + RESOURCE * 0.85 + 5, tag_h(RESOURCE) + 40, MENU * 0.85, large_h(MENU * 0.85), 0, 0.4)
+        self.pop_plus = assets.Image(assets.RIGHT_ARROW_PLUS, 0.03 * self.W + RESOURCE * 0.85 + MENU * 0.85 + 10, tag_h(RESOURCE) + 44, ARROW * 0.7, arrow_h(ARROW * 0.7))
         # Worker menu
         self.harvester_tag = assets.Image(assets.LARGE_HARVESTER, WORKER_X, WORKER_Y, MENU, large_h(MENU), 0, 0.4)
         self.harvester_minus = assets.Image(assets.LEFT_ARROW_MINUS, WORKER_X + MENU + 8, WORKER_Y, ARROW, arrow_h(ARROW))
@@ -71,12 +76,20 @@ class Ui:
         # City menu
         self.building_frame = assets.Image(assets.FRAME, self.W * 0.625, self.H * 0.336, self.W * 0.273, self.H * 0.439)
         self.square_house = assets.Image(assets.SQUARE_HOUSE, WORKER_X, WORKER_Y - 4, ARROW * 1.3, square_h(ARROW * 1.3), 0, 0.5, 0.46)
-        self.house_cost = assets.Image(assets.LARGE_WOOD, WORKER_X + ARROW * 1.3 + 8, WORKER_Y, MENU, large_h(MENU), 0, 0.37)
+        self.house_cost = assets.Image(assets.LARGE_WOOD, WORKER_X + ARROW * 1.3 + 8, WORKER_Y, MENU, large_h(MENU), 0, 0.37, text_size=24)
         self.house_plus = assets.Image(assets.RIGHT_ARROW_PLUS, WORKER_X + ARROW * 1.3 + MENU + 2*  8, WORKER_Y, ARROW, arrow_h(ARROW))
+        self.square_granary = assets.Image(assets.SQUARE_GRANARY, WORKER_X, WORKER_Y - 4 + square_h(ARROW * 1.3) + 5, ARROW * 1.3, square_h(ARROW * 1.3), 0, 0.5, 0.46)
+        self.granary_cost = assets.Image(assets.LARGE_WOOD, WORKER_X + ARROW * 1.3 + 8, WORKER_Y + square_h(ARROW * 1.3) + 5, MENU, large_h(MENU), 0, 0.37, text_size=24)
+        self.granary_plus = assets.Image(assets.RIGHT_ARROW_PLUS, WORKER_X + ARROW * 1.3 + MENU + 2*  8, WORKER_Y + square_h(ARROW * 1.3) + 5, ARROW, arrow_h(ARROW))
+        self.square_storage = assets.Image(assets.SQUARE_STORAGE, WORKER_X, WORKER_Y - 4 + 2 * square_h(ARROW * 1.3) + 10, ARROW * 1.3, square_h(ARROW * 1.3), 0, 0.5, 0.46)
+        self.storage_cost = assets.Image(assets.LARGE_WOOD, WORKER_X + ARROW * 1.3 + 8, WORKER_Y + 2 * square_h(ARROW * 1.3) + 10, MENU, large_h(MENU), 0, 0.37, text_size=24)
+        self.storage_plus = assets.Image(assets.RIGHT_ARROW_PLUS, WORKER_X + ARROW * 1.3 + MENU + 2*  8, WORKER_Y + 2 * square_h(ARROW * 1.3) + 10, ARROW, arrow_h(ARROW))
         self.building0 = assets.Image(assets.LARGE, (self.W * 0.273 - MENU) / 2, 0, MENU, large_h(MENU), text_x = 0.58)
         self.building1 = assets.Image(assets.LARGE, (self.W * 0.273 - MENU) / 2, large_h(MENU) + 5, MENU, large_h(MENU), text_x = 0.58)
         self.building2 = assets.Image(assets.LARGE, (self.W * 0.273 - MENU) / 2, 2 * large_h(MENU) + 10, MENU, large_h(MENU), text_x = 0.58)
         self.house = assets.Image(assets.HOUSE, large_h(MENU) * 0.125, large_h(MENU) * 0.125, large_h(MENU) * 0.75, large_h(MENU) * 0.75)
+        self.granary = assets.Image(assets.GRANARY, large_h(MENU) * 0.125, large_h(MENU) * 0.125, large_h(MENU) * 0.75, large_h(MENU) * 0.75)
+        self.storage = assets.Image(assets.STORAGE, large_h(MENU) * 0.125, large_h(MENU) * 0.125, large_h(MENU) * 0.75, large_h(MENU) * 0.75)
 
     def run(self) -> None:
         """ Core loop of the game """
@@ -128,9 +141,12 @@ class Ui:
             self.MANAGE: assets.BACKGROUND_MANAGE,
         }
         self.background.change(background[self.current_menu])
-        self.city_menu.change(assets.LARGE_SELECTED if self.current_menu == self.CITY else assets.LARGE)
-        self.explore_menu.change(assets.LARGE_SELECTED if self.current_menu == self.EXPLORE else assets.LARGE)
-        self.manage_menu.change(assets.LARGE_SELECTED if self.current_menu == self.MANAGE else assets.LARGE)
+        self.city_menu.set_text("City", GREY if self.current_menu == self.CITY else BLACK)
+        self.explore_menu.set_text("Explore", GREY if self.current_menu == self.EXPLORE else BLACK)
+        self.manage_menu.set_text("Manage", GREY if self.current_menu == self.MANAGE else BLACK)
+        self.city_menu.change(assets.LARGE_DISABLED if self.current_menu == self.CITY else assets.LARGE)
+        self.explore_menu.change(assets.LARGE_DISABLED if self.current_menu == self.EXPLORE else assets.LARGE)
+        self.manage_menu.change(assets.LARGE_DISABLED if self.current_menu == self.MANAGE else assets.LARGE)
 
         self.background.draw(self.display)
         self.city_menu.draw(self.display)
@@ -140,10 +156,12 @@ class Ui:
     def draw_counters(self) -> None:
         """ Update resources and production counter """
         # Food counter
-        self.food_prod_tag.draw(self.display, text = self.game.format_harvester_production())
+        if self.game.harvester_production() != 0:
+            self.food_prod_tag.draw(self.display, text = self.game.format_harvester_production())
         self.food_tag.draw(self.display, text = self.game.format_food())
         # Wood counter
-        self.wood_prod_tag.draw(self.display, text = self.game.format_lumber_production())
+        if self.game.lumber_production() != 0:
+            self.wood_prod_tag.draw(self.display, text = self.game.format_lumber_production())
         self.wood_tag.draw(self.display, text = self.game.format_wood())
         # Population counter
         self.tag_population.draw(self.display, text = self.game.format_population())
@@ -173,7 +191,7 @@ class Ui:
             if self.game.event_list.event_exist("WoodPlus"):
                 self.wood_timer.draw(self.display, text = self.game.event_list.select_event("WoodPlus").format_lasting_time())
                 self.food_button.change(assets.SQUARE_PLUS_FOOD_DISABLED)
-                self.food_button.set_text(self.game.format_food_gathering(), (97, 83, 74)) # Set text grey
+                self.food_button.set_text(self.game.format_food_gathering(), GREY) # Set text grey
             else:
                 self.food_button.change(assets.SQUARE_PLUS_FOOD)
                 self.food_button.set_text(self.game.format_food_gathering())
@@ -258,24 +276,40 @@ class Ui:
             if event.type == pygame.MOUSEBUTTONUP:
                 self.starting_position = (0, 0)
                 self.game.increment_house(self.house_plus.collide(self.mouse))
+                self.game.increment_granary(self.granary_plus.collide(self.mouse))
+                self.game.increment_storage(self.storage_plus.collide(self.mouse))
 
     def draw_city_menu(self) -> None:
         """ Draw button in the city menu """
         if self.current_menu == self.CITY:
 
             self.building_frame.change()
+
             house_enabled = (self.game.wood >= self.game.house_cost() and self.game.event_list.count_event_type("Building") < 3)
             self.house_plus.change(assets.RIGHT_ARROW_PLUS if house_enabled else assets.RIGHT_ARROW_PLUS_DISABLED)
-            
             self.square_house.draw(self.display, text = int(self.game.house))
             self.house_cost.draw(self.display, text = self.game.format_house_cost())
             self.house_plus.draw(self.display)
 
+            granary_enabled = (self.game.wood >= self.game.granary_cost() and self.game.event_list.count_event_type("Building") < 3)
+            self.granary_plus.change(assets.RIGHT_ARROW_PLUS if granary_enabled else assets.RIGHT_ARROW_PLUS_DISABLED)
+            self.square_granary.draw(self.display, text = int(self.game.granary))
+            self.granary_cost.draw(self.display, text = self.game.format_granary_cost())
+            self.granary_plus.draw(self.display)
+
+            storage_enabled = (self.game.wood >= self.game.storage_cost() and self.game.event_list.count_event_type("Building") < 3)
+            self.storage_plus.change(assets.RIGHT_ARROW_PLUS if storage_enabled else assets.RIGHT_ARROW_PLUS_DISABLED)
+            self.square_storage.draw(self.display, text = int(self.game.storage))
+            self.storage_cost.draw(self.display, text = self.game.format_storage_cost())
+            self.storage_plus.draw(self.display)
+
             if self.game.event_list.event_type_exist("Building"):
                 image = {
-                    "House": self.house
+                    "House": self.house,
+                    "Granary": self.granary,
+                    "Storage": self.storage
                 }
-                
+
                 if len(self.game.event_list.building_queue()) > 0:
                     building0 = self.game.event_list.building_queue()[0]
                     image[building0.name].draw(self.building0.picture)

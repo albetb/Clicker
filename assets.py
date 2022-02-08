@@ -12,7 +12,7 @@ ASSET_DIR = os.path.join(".", "asset")
 # ----------> Button files <----------------------------------------
 # Name of buttons: shape_symbol_other.png
 
-BACKGROUND_EXPLORE = os.path.join(ASSET_DIR, "background_explore.jpg")
+BACKGROUND_EXPLORE = os.path.join(ASSET_DIR, "background_explore.png")
 BACKGROUND_CITY = os.path.join(ASSET_DIR, "background_city.png")
 BACKGROUND_MANAGE = os.path.join(ASSET_DIR, "background_manage.png")
 
@@ -20,27 +20,29 @@ SQUARE_PLUS_FOOD = os.path.join(ASSET_DIR, "square_plus_food.png")
 SQUARE_PLUS_FOOD_DISABLED = os.path.join(ASSET_DIR, "square_plus_food_disabled.png")
 SQUARE = os.path.join(ASSET_DIR, "square.png")
 SQUARE_HOUSE = os.path.join(ASSET_DIR, "square_house.png")
+SQUARE_GRANARY = os.path.join(ASSET_DIR, "square_granary.png")
+SQUARE_STORAGE = os.path.join(ASSET_DIR, "square_storage.png")
 
-ROUND_PLUS = os.path.join(ASSET_DIR, "round_plus.png")
 ROUND_WOOD = os.path.join(ASSET_DIR, "round_wood.png")
 
 LARGE = os.path.join(ASSET_DIR, "large.png")
-LARGE_SELECTED = os.path.join(ASSET_DIR, "large_selected.png")
+LARGE_DISABLED = os.path.join(ASSET_DIR, "large_disabled.png")
 LARGE_FOOD = os.path.join(ASSET_DIR, "large_food.png")
 LARGE_WOOD = os.path.join(ASSET_DIR, "large_wood.png")
 LARGE_HARVESTER = os.path.join(ASSET_DIR, "large_harvester.png")
 LARGE_LUMBERER = os.path.join(ASSET_DIR, "large_lumberer.png")
+MEDIUM_POPULATION = os.path.join(ASSET_DIR, "medium_population.png")
 
 LEFT_ARROW_MINUS = os.path.join(ASSET_DIR, "left_arrow_minus.png")
 RIGHT_ARROW_PLUS = os.path.join(ASSET_DIR, "right_arrow_plus.png")
 RIGHT_ARROW_PLUS_DISABLED = os.path.join(ASSET_DIR, "right_arrow_plus_disabled.png")
 
-TAG_POPULATION = os.path.join(ASSET_DIR, "tag_population.png")
-TAG_FOOD = os.path.join(ASSET_DIR, "tag_food.png")
-TAG_WOOD = os.path.join(ASSET_DIR, "tag_wood.png")
+TAG = os.path.join(ASSET_DIR, "tag.png")
 
 FRAME = os.path.join(ASSET_DIR, "no_image.png")
 HOUSE = os.path.join(ASSET_DIR, "house.png")
+GRANARY = os.path.join(ASSET_DIR, "granary.png")
+STORAGE = os.path.join(ASSET_DIR, "storage.png")
 
 # ----------> Image <----------------------------------------
 
@@ -81,7 +83,7 @@ class Image:
             self.text = Font(FONT, self.textSize).render(str(text), True, color)
             self.textRect = self.text.get_rect()
             avg = lambda xy, wh: (2 * xy + wh) / 2
-            self.textRect.center = (avg(self.x, self.w) - (0.5 - self.text_x) * self.w, avg(self.y, self.h) - (self.textSize / 6) - (0.5 - self.text_y) * self.h)
+            self.textRect.center = (avg(self.x, self.w) - (0.5 - self.text_x) * self.w, avg(self.y, self.h) - (self.textSize / 10) - (0.5 - self.text_y) * self.h)
     
     def set_text_size(self, textSize: float) -> None:
         """ Change default text size """

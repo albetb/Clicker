@@ -55,10 +55,7 @@ class Event:
     def set_starting_time(self, starting_time: str or datetime) -> None:
         """ Take a string o a datetime object and set it as current starting time """
         if isinstance(starting_time, str):
-            if starting_time == "":
-                self.starting_time = None
-            else:
-                self.starting_time = get_time(starting_time)
+            self.starting_time = None if starting_time == "" else get_time(starting_time)
         elif isinstance(starting_time, datetime):
             self.starting_time = starting_time
 
