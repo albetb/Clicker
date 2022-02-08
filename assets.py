@@ -1,4 +1,4 @@
-import os
+from os import path
 from pygame import Rect, image, transform, font
 from pygame.surface import Surface
 from typing import Optional, Any
@@ -7,42 +7,43 @@ class Font(font.Font):
     pass
 
 FONT = "freesansbold.ttf"
-ASSET_DIR = os.path.join(".", "asset")
+ASSET_DIR = path.join(".", "asset")
 
 # ----------> Button files <----------------------------------------
 # Name of buttons: shape_symbol_other.png
 
-BACKGROUND_EXPLORE = os.path.join(ASSET_DIR, "background_explore.png")
-BACKGROUND_CITY = os.path.join(ASSET_DIR, "background_city.png")
-BACKGROUND_MANAGE = os.path.join(ASSET_DIR, "background_manage.png")
+BACKGROUND_EXPLORE = path.join(ASSET_DIR, "background_explore.png")
+BACKGROUND_CITY = path.join(ASSET_DIR, "background_city.png")
+BACKGROUND_MANAGE = path.join(ASSET_DIR, "background_manage.png")
 
-SQUARE_PLUS_FOOD = os.path.join(ASSET_DIR, "square_plus_food.png")
-SQUARE_PLUS_FOOD_DISABLED = os.path.join(ASSET_DIR, "square_plus_food_disabled.png")
-SQUARE = os.path.join(ASSET_DIR, "square.png")
-SQUARE_HOUSE = os.path.join(ASSET_DIR, "square_house.png")
-SQUARE_GRANARY = os.path.join(ASSET_DIR, "square_granary.png")
-SQUARE_STORAGE = os.path.join(ASSET_DIR, "square_storage.png")
+SQUARE_PLUS_FOOD = path.join(ASSET_DIR, "square_plus_food.png")
+SQUARE_PLUS_FOOD_DISABLED = path.join(ASSET_DIR, "square_plus_food_disabled.png")
+SQUARE = path.join(ASSET_DIR, "square.png")
+SQUARE_HOUSE = path.join(ASSET_DIR, "square_house.png")
+SQUARE_GRANARY = path.join(ASSET_DIR, "square_granary.png")
+SQUARE_STORAGE = path.join(ASSET_DIR, "square_storage.png")
 
-ROUND_WOOD = os.path.join(ASSET_DIR, "round_wood.png")
+ROUND_WOOD = path.join(ASSET_DIR, "round_wood.png")
 
-LARGE = os.path.join(ASSET_DIR, "large.png")
-LARGE_DISABLED = os.path.join(ASSET_DIR, "large_disabled.png")
-LARGE_FOOD = os.path.join(ASSET_DIR, "large_food.png")
-LARGE_WOOD = os.path.join(ASSET_DIR, "large_wood.png")
-LARGE_HARVESTER = os.path.join(ASSET_DIR, "large_harvester.png")
-LARGE_LUMBERER = os.path.join(ASSET_DIR, "large_lumberer.png")
-MEDIUM_POPULATION = os.path.join(ASSET_DIR, "medium_population.png")
+LARGE = path.join(ASSET_DIR, "large.png")
+LARGE_DISABLED = path.join(ASSET_DIR, "large_disabled.png")
+LARGE_FOOD = path.join(ASSET_DIR, "large_food.png")
+LARGE_WOOD = path.join(ASSET_DIR, "large_wood.png")
+LARGE_HARVESTER = path.join(ASSET_DIR, "large_harvester.png")
+LARGE_LUMBERER = path.join(ASSET_DIR, "large_lumberer.png")
+MEDIUM_POPULATION = path.join(ASSET_DIR, "medium_population.png")
 
-LEFT_ARROW_MINUS = os.path.join(ASSET_DIR, "left_arrow_minus.png")
-RIGHT_ARROW_PLUS = os.path.join(ASSET_DIR, "right_arrow_plus.png")
-RIGHT_ARROW_PLUS_DISABLED = os.path.join(ASSET_DIR, "right_arrow_plus_disabled.png")
+LEFT_ARROW_MINUS = path.join(ASSET_DIR, "left_arrow_minus.png")
+RIGHT_ARROW_PLUS = path.join(ASSET_DIR, "right_arrow_plus.png")
+RIGHT_ARROW_PLUS_DISABLED = path.join(ASSET_DIR, "right_arrow_plus_disabled.png")
 
-TAG = os.path.join(ASSET_DIR, "tag.png")
+TAG = path.join(ASSET_DIR, "tag.png")
+SHORT_TAG = path.join(ASSET_DIR, "short_tag.png")
 
-FRAME = os.path.join(ASSET_DIR, "no_image.png")
-HOUSE = os.path.join(ASSET_DIR, "house.png")
-GRANARY = os.path.join(ASSET_DIR, "granary.png")
-STORAGE = os.path.join(ASSET_DIR, "storage.png")
+FRAME = path.join(ASSET_DIR, "no_image.png")
+HOUSE = path.join(ASSET_DIR, "house.png")
+GRANARY = path.join(ASSET_DIR, "granary.png")
+STORAGE = path.join(ASSET_DIR, "storage.png")
 
 # ----------> Image <----------------------------------------
 

@@ -6,13 +6,14 @@ from engine import load_game
 large_h = lambda large_w: int(round(large_w * 0.364, 0))
 medium_h = lambda large_w: int(round(large_w * 0.434, 0))
 tag_h = lambda large_w: int(round(large_w * 0.526, 0))
+tag_h = lambda large_w: int(round(large_w * 0.615, 0))
 square_h = lambda square_w: int(round(square_w * 1.09, 0))
 round_h = lambda round_w: int(round(round_w * 1.03, 0))
 arrow_h = lambda round_w: int(round(round_w * 1.25, 0))
 
 # Base button width and position
 RESOURCE = 230
-PRODUCTION = RESOURCE * 0.6
+PRODUCTION = RESOURCE * 0.55
 FOOD = 200
 MENU = 275
 ARROW = 80
@@ -59,9 +60,9 @@ class Ui:
         self.city_menu = assets.Image(assets.LARGE, (self.W - 3 * MENU) * 3 // 4 + 2 * MENU, self.H - large_h(MENU) - 20, MENU, large_h(MENU), "City", text_size=30)
         # Tag with current resources
         self.food_tag = assets.Image(assets.LARGE_FOOD, 0.03 * self.W, 0.03 * self.H, RESOURCE, large_h(RESOURCE), 0, text_x=0.4, text_size=23)
-        self.food_prod_tag = assets.Image(assets.TAG, 0.03 * self.W + RESOURCE * 0.1, 0.03 * self.H + tag_h(PRODUCTION) * 0.82, PRODUCTION, tag_h(PRODUCTION), 0, text_x = 0.44, text_y = 0.53, text_size=18)
         self.wood_tag = assets.Image(assets.LARGE_WOOD, 0.06 * self.W + RESOURCE, 0.03 * self.H, RESOURCE, large_h(RESOURCE), 0, text_x=0.4, text_size=23)
-        self.wood_prod_tag = assets.Image(assets.TAG, 0.06 * self.W + RESOURCE + RESOURCE * 0.1, 0.03 * self.H + tag_h(PRODUCTION) * 0.82, PRODUCTION, tag_h(PRODUCTION), 0, text_x = 0.44, text_y = 0.53, text_size=18)
+        self.food_prod_tag = assets.Image(assets.SHORT_TAG, 0.03 * self.W + RESOURCE * 0.1, 0.03 * self.H + tag_h(PRODUCTION) * 0.75, PRODUCTION, tag_h(PRODUCTION), 0, text_x = 0.5, text_y = 0.53, text_size=18)
+        self.wood_prod_tag = assets.Image(assets.SHORT_TAG, 0.06 * self.W + RESOURCE + RESOURCE * 0.1, 0.03 * self.H + tag_h(PRODUCTION) * 0.75, PRODUCTION, tag_h(PRODUCTION), 0, text_x = 0.5, text_y = 0.53, text_size=18)
         self.tag_population = assets.Image(assets.MEDIUM_POPULATION, 0.03 * self.W, tag_h(RESOURCE) + 40, RESOURCE * 0.85, medium_h(RESOURCE * 0.85), 0, 0.45)
         # Buy population button and cost
         self.pop_cost = assets.Image(assets.LARGE_FOOD, 0.03 * self.W + RESOURCE * 0.85 + 5, tag_h(RESOURCE) + 40, MENU * 0.85, large_h(MENU * 0.85), 0, 0.4)
@@ -91,36 +92,36 @@ class Ui:
         self.granary = assets.Image(assets.GRANARY, large_h(MENU) * 0.125, large_h(MENU) * 0.125, large_h(MENU) * 0.75, large_h(MENU) * 0.75)
         self.storage = assets.Image(assets.STORAGE, large_h(MENU) * 0.125, large_h(MENU) * 0.125, large_h(MENU) * 0.75, large_h(MENU) * 0.75)
 
-    def run(self) -> None:
+    async def run(self) -> None:
         """ Core loop of the game """
         while True:
             # Generate resource and manage event
-            self.game.autominer()
-            self.game.manage_event()
+            await self.game.autominer()
+            await self.game.manage_event()
             self.mouse = pygame.mouse.get_pos()
             # Before game events / user input
-            self.loop_explore_menu()
-            self.loop_manage_menu()
-            self.loop_city_menu()
+            await self.loop_explore_menu()
+            await self.loop_manage_menu()
+            await self.loop_city_menu()
             # Game events / user input
             for event in pygame.event.get():
-                self.event_menu(event)
-                self.event_explore_menu(event)
-                self.event_manage_menu(event)
-                self.event_city_menu(event)
+                await self.event_menu(event)
+                await self.event_explore_menu(event)
+                await self.event_manage_menu(event)
+                await self.event_city_menu(event)
             # Draw screen
-            self.draw_menu()
-            self.draw_counters()
-            self.draw_explore_menu()
-            self.draw_manage_menu()
-            self.draw_city_menu()
+            await self.draw_menu()
+            await self.draw_counters()
+            await self.draw_explore_menu()
+            await self.draw_manage_menu()
+            await self.draw_city_menu()
             # Update screen and save
             pygame.display.update()
             self.clock.tick(self.fps)
-            self.game.save_current_time()
-            self.game.save_game()
+            await self.game.save_current_time()
+            await self.game.save_game()
 
-    def event_menu(self, event: pygame.event) -> None:
+    async def event_menu(self, event: pygame.event) -> None:
         """ Manage user event in the all menu """
         if event.type == pygame.QUIT:
             pygame.quit()
@@ -133,7 +134,7 @@ class Ui:
             if self.city_menu.collide(self.mouse):
                 self.current_menu = self.CITY
 
-    def draw_menu(self) -> None:
+    async def draw_menu(self) -> None:
         """ Draw bottom menu and change background """
         background = {
             self.EXPLORE: assets.BACKGROUND_EXPLORE,
@@ -153,7 +154,7 @@ class Ui:
         self.explore_menu.draw(self.display)
         self.manage_menu.draw(self.display)
 
-    def draw_counters(self) -> None:
+    async def draw_counters(self) -> None:
         """ Update resources and production counter """
         # Food counter
         if self.game.harvester_production() != 0:
@@ -168,12 +169,12 @@ class Ui:
 
     # --------------------> 🔭 EXPLORE 🔭 <---------------------------------------------
 
-    def loop_explore_menu(self) -> None:
+    async def loop_explore_menu(self) -> None:
         """ Executed at the start of every loop in the explore menu """
         if self.current_menu == self.EXPLORE:
             pass
 
-    def event_explore_menu(self, event: pygame.event) -> None:
+    async def event_explore_menu(self, event: pygame.event) -> None:
         """ Manage user event in the explore menu """
         if self.current_menu == self.EXPLORE:
 
@@ -183,7 +184,7 @@ class Ui:
                 elif self.wood_button.collide(self.mouse):
                     self.game.wood_gathering()
 
-    def draw_explore_menu(self) -> None:
+    async def draw_explore_menu(self) -> None:
         """ Draw button in the explore menu """
         if self.current_menu == self.EXPLORE:
             
@@ -201,7 +202,7 @@ class Ui:
 
     # --------------------> 🪓 MANAGE 🪓 <---------------------------------------------
 
-    def loop_manage_menu(self) -> None:
+    async def loop_manage_menu(self) -> None:
         """ Executed at the start of every loop in the manage menu """
         if self.current_menu == self.MANAGE:
 
@@ -213,7 +214,7 @@ class Ui:
                 self.game.increment_lumber(fast_buy(self.lumber_plus.collide(self.mouse)))
                 self.game.decrement_lumber(fast_buy(self.lumber_minus.collide(self.mouse)))
 
-    def event_manage_menu(self, event: pygame.event) -> None:
+    async def event_manage_menu(self, event: pygame.event) -> None:
         """ Manage user event in the manage menu """
         if self.current_menu == self.MANAGE:
 
@@ -233,7 +234,7 @@ class Ui:
                 self.game.increment_lumber(self.lumber_plus.collide(self.mouse))
                 self.game.decrement_lumber(self.lumber_minus.collide(self.mouse))
 
-    def draw_manage_menu(self) -> None:
+    async def draw_manage_menu(self) -> None:
         """ Draw button in the manage menu """
         if self.current_menu == self.MANAGE:
 
@@ -251,7 +252,7 @@ class Ui:
             
     # --------------------> 🏡 CITY 🏡 <---------------------------------------------
 
-    def loop_city_menu(self) -> None:
+    async def loop_city_menu(self) -> None:
         """ Executed at the start of every loop in the city menu """
         if self.current_menu == self.CITY:
 
@@ -265,7 +266,7 @@ class Ui:
             self.building1.y = self.building0.y + self.building0.h + 5
             self.building2.y = self.building1.y + self.building1.h + 5
 
-    def event_city_menu(self, event: pygame.event) -> None:
+    async def event_city_menu(self, event: pygame.event) -> None:
         """ Manage user event in the city menu """
         if self.current_menu == self.CITY:
 
@@ -279,7 +280,7 @@ class Ui:
                 self.game.increment_granary(self.granary_plus.collide(self.mouse))
                 self.game.increment_storage(self.storage_plus.collide(self.mouse))
 
-    def draw_city_menu(self) -> None:
+    async def draw_city_menu(self) -> None:
         """ Draw button in the city menu """
         if self.current_menu == self.CITY:
 

@@ -127,7 +127,7 @@ class EventQueue:
         if event.type == "Building":
             event.counter = self.count_event_type("Building")
             if event.counter > 0: # Block building if there is another one in construction
-                event.starting_time = None
+                event.starting_time = self.building_queue()[event.counter - 1].ending_time()
         self.event_list.append(event)
 
     def remove_event(self, event: Event) -> None:
@@ -137,8 +137,6 @@ class EventQueue:
             for evt in self.event_list:
                 if evt.type == "Building":
                     evt.counter -= 1
-                    if evt.counter == 0: # Start next building
-                        evt.starting_time = now()
 
     def remove(self, event_name: str) -> None:
         """ Given a name remove the first event with that name from list """

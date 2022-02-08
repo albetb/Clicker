@@ -53,11 +53,11 @@ class Game:
 
     # ----------> Save game <----------------------------------------
 
-    def save_current_time(self) -> None:
+    async def save_current_time(self) -> None:
         """ Save current time as a formatted string in self.time """
         self.time = events.current_time()
 
-    def save_game(self):
+    async def save_game(self):
         """ Save the current game to a .txt file as JSON """
         with open('savegame.txt', 'w+') as file:
             file.write(json.dumps(self.serialize()))
@@ -182,11 +182,11 @@ class Game:
             else:
                 self.event_list.push(events.Event("WoodPlus", "Resources", seconds = 2 * 60 + self.lumber))
 
-    def autominer(self) -> None:
+    async def autominer(self) -> None:
         """ Add food and wood for worker production, reduce food for people eating in harvester_production(),
             if food < -100 population is reduced """
-        self.food = min(self.food + self.harvester_production() / self.fps, self.food_limit())
-        self.wood = min(self.wood + self.lumber_production() / self.fps, self.wood_limit())
+        self.food = round(min(self.food + self.harvester_production() / self.fps, self.food_limit()), 2)
+        self.wood = round(min(self.wood + self.lumber_production() / self.fps, self.wood_limit()), 2)
         if self.food < -100:
             self.food = 0
             self.population = max(0, self.population - 1)
@@ -318,7 +318,7 @@ class Game:
 
     # ----------> Events <----------------------------------------
 
-    def manage_event(self) -> None:
+    async def manage_event(self) -> None:
         """ Manage event list every tick, for adding value to counter or checking if an event is expired """
         if len(self.event_list.expired_event()) > 0:
             for event in self.event_list.expired_event():

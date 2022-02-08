@@ -1,3 +1,4 @@
-import ui
+from ui import Ui
+import asyncio
 
-ui.Ui().run()
+asyncio.run(Ui().run())
