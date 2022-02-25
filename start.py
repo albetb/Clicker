@@ -1,4 +1,4 @@
 from ui import Ui
-import asyncio
+from asyncio import run
 
-asyncio.run(Ui().run())
+run(Ui().run())

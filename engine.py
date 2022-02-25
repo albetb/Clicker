@@ -1,7 +1,7 @@
 from enum import Enum, unique
-import events
-import json
+from json import load, dumps
 from math import log10, floor
+import events
 
 FRAME_PER_SECOND = 60
 OFFLINE_PRODUCTION_MULTIPLIER = 0.8
@@ -11,7 +11,7 @@ def load_game():
     """ Load a game from a .txt file """
     try:
         with open('savegame.txt', 'r') as file:
-            return Game.deserialize(json.load(file))
+            return Game.deserialize(load(file))
     except:
         return Game()
 
@@ -27,7 +27,7 @@ class GameStats(str, Enum):
     storage = "storage"
 
 class Game:
-    def __init__(self, population: int = 0, food: float = 0, wood: float = 0, harvester: int = 0, lumber: int = 0, house: int = 0, granary: int = 0, storage: int = 0, time: str = "", event_list = "") -> None:
+    def __init__(self, population: int = 0, food: float = 0, wood: float = 0, harvester: int = 0, lumber: int = 0, house: int = 0, granary: int = 0, storage: int = 0, time: str = "", events_list = "") -> None:
         self.fps = FRAME_PER_SECOND
         self.population = population
         self.time = time
@@ -38,7 +38,8 @@ class Game:
         self.house = house
         self.granary = granary
         self.storage = storage
-        self.event_list = events.EventQueue()
+        self.events = events.Events()
+        self.max_buildings = 3
 
         # Offline production
         if self.time != "":
@@ -47,8 +48,8 @@ class Game:
             self.wood += self.lumber_production() * offline_production / self.fps
 
         # Initialize event list
-        if event_list != "":
-            self.event_list.deserialize_event_list(event_list)
+        if events_list != "":
+            self.events.deserialize_events(events)
             self.init_event()
 
     # ----------> Save game <----------------------------------------
@@ -60,7 +61,7 @@ class Game:
     async def save_game(self):
         """ Save the current game to a .txt file as JSON """
         with open('savegame.txt', 'w+') as file:
-            file.write(json.dumps(self.serialize()))
+            file.write(dumps(self.serialize()))
 
     def serialize(self) -> dict:
         """ Serialize game stats as a dictionary to save it in a JSON file """
@@ -80,7 +81,7 @@ class Game:
                 "lumber": self.lumber
                 },
             "time": self.time,
-            "event_list": self.event_list.serialize_event_list()
+            "events": self.events.serialize_events()
             }
 
     @classmethod
@@ -98,8 +99,8 @@ class Game:
                 granary = data["building"]["granary"]
                 storage = data["building"]["storage"]
                 time = data["time"]
-                event_list = data["event_list"]
-                return cls(population, food, wood, harvester, lumber, house, granary, storage, time, event_list)
+                events = data["events"]
+                return cls(population, food, wood, harvester, lumber, house, granary, storage, time, events)
         except:
             pass
         return cls()
@@ -133,7 +134,7 @@ class Game:
 
     def house_total(self) -> int:
         """ Return total house constructed + in construction """
-        return self.house + self.event_list.count_event_name("House")
+        return self.house + self.events.count("House")
 
     def granary_cost(self) -> int:
         """ Return cost in wood for a granary """
@@ -141,7 +142,7 @@ class Game:
 
     def granary_total(self) -> int:
         """ Return total granary constructed + in construction """
-        return self.granary + self.event_list.count_event_name("Granary")
+        return self.granary + self.events.count("Granary")
 
     def storage_cost(self) -> int:
         """ Return cost in wood for a storage """
@@ -149,7 +150,7 @@ class Game:
 
     def storage_total(self) -> int:
         """ Return total storage constructed + in construction """
-        return self.storage + self.event_list.count_event_name("Storage")
+        return self.storage + self.events.count("Storage")
 
     def population_limit(self) -> int:
         """ Return population limit """
@@ -168,29 +169,28 @@ class Game:
             if dry_run is True return food production,
             don't work during wood gathering  """
         value = 10 + self.harvester ** 1.5
-        if not dry_run and not self.event_list.event_exist("WoodPlus"):
+        if not dry_run and not self.events.exist("WoodPlus"):
             self.food += value
         return value
 
     def wood_gathering(self) -> None:
         """ Add wood after a period of time, clicking again the button shorten that time,
             disable food gathering button, time delta is 2 min + 1 sec * lumberer """
-        if not self.event_list.event_exist("WoodPlusDebuff"):
-            if self.event_list.event_exist("WoodPlus"):
+        if not self.events.exist("WoodPlusDebuff"):
+            if self.events.exist("WoodPlus"):
                 self.event_wood_plus_production(seconds = 2)
-                self.event_list.select_event("WoodPlus").subtract_time(seconds = 2)
+                self.events.get("WoodPlus").subtract_time(seconds = 2)
             else:
-                self.event_list.push(events.Event("WoodPlus", "Resources", seconds = 2 * 60 + self.lumber))
+                self.events.push(events.Event("WoodPlus", "Resources", seconds = 2 * 60 + self.lumber))
 
     async def autominer(self) -> None:
-        """ Add food and wood for worker production, reduce food for people eating in harvester_production(),
-            if food < -100 population is reduced """
+        """ Add food and wood for worker production, reduce food for people eating in harvester_production() """
         self.food = round(min(self.food + self.harvester_production() / self.fps, self.food_limit()), 2)
         self.wood = round(min(self.wood + self.lumber_production() / self.fps, self.wood_limit()), 2)
-        if self.food < -100:
+        if self.food < -100: # If food < -100 population is reduced
             self.food = 0
             self.population = max(0, self.population - 1)
-            if self.harvester + self.lumber > self.population:
+            if self.unemployed() <= 0:
                 if self.lumber == max(self.harvester, self.lumber):
                     self.lumber -= 1
                 elif self.harvester == max(self.harvester, self.lumber):
@@ -225,33 +225,33 @@ class Game:
         """ Add a number of people to lumber """
         lumber_plus = min(self.unemployed(), int(num))
         self.lumber += lumber_plus
-        if self.event_list.event_exist("WoodPlus"):
-            self.event_list.select_event("WoodPlus").add_time(seconds = lumber_plus)
+        if self.events.exist("WoodPlus"):
+            self.events.get("WoodPlus").add_time(seconds = lumber_plus)
 
     def decrement_lumber(self, num: int = 1) -> None:
         """ Subtract a number of people to lumber """
         lumber_minus = min(self.lumber, int(num))
         self.lumber -= lumber_minus
-        if self.event_list.event_exist("WoodPlus"):
-            self.event_list.select_event("WoodPlus").subtract_time(seconds = lumber_minus)
+        if self.events.exist("WoodPlus"):
+            self.events.get("WoodPlus").subtract_time(seconds = lumber_minus)
 
     def increment_house(self, check: bool) -> None:
         """ Add a house to production, will be added after some times """
-        if check and self.wood >= self.house_cost() and self.event_list.count_event_type("Building") < 3:
+        if check and self.wood >= self.house_cost() and self.events.count_type("Building") < self.max_buildings:
             self.wood -= self.house_cost()
-            self.event_list.push(events.Event("House", "Building", minutes = self.house_total() + 1))
+            self.events.push(events.Event("House", "Building", minutes = self.house_total() + 1))
 
     def increment_granary(self, check: bool) -> None:
         """ Add a granary to production, will be added after some times """
-        if check and self.wood >= self.granary_cost() and self.event_list.count_event_type("Building") < 3:
+        if check and self.wood >= self.granary_cost() and self.events.count_type("Building") < self.max_buildings:
             self.wood -= self.granary_cost()
-            self.event_list.push(events.Event("Granary", "Building", minutes = (self.granary_total() * 1.5) + 1))
+            self.events.push(events.Event("Granary", "Building", minutes = (self.granary_total() * 1.5) + 1))
 
     def increment_storage(self, check: bool) -> None:
         """ Add a storage to production, will be added after some times """
-        if check and self.wood >= self.storage_cost() and self.event_list.count_event_type("Building") < 3:
+        if check and self.wood >= self.storage_cost() and self.events.count_type("Building") < self.max_buildings:
             self.wood -= self.storage_cost()
-            self.event_list.push(events.Event("Storage", "Building", minutes = (self.storage_total() + 1) * 5))
+            self.events.push(events.Event("Storage", "Building", minutes = (self.storage_total() + 1) * 5))
 
     # ----------> Formatting <----------------------------------------
 
@@ -280,11 +280,11 @@ class Game:
         return self.format_number(self.lumber)
 
     def format_harvester_production(self) -> str:
-        """ Return a formatted string for displaying food production """
+        """ Return food production as a formatted string for displaying """
         return self.format_number(self.harvester_production(), "high") + "/s"
 
     def format_lumber_production(self) -> str:
-        """ Return a formatted string for displaying wood production """
+        """ Return wood production as a formatted string for displaying """
         return self.format_number(self.lumber_production(), "high") + "/s"
 
     def format_population_cost(self) -> str:
@@ -320,33 +320,33 @@ class Game:
 
     async def manage_event(self) -> None:
         """ Manage event list every tick, for adding value to counter or checking if an event is expired """
-        if len(self.event_list.expired_event()) > 0:
-            for event in self.event_list.expired_event():
+        if len(self.events.expired()) > 0:
+            for event in self.events.expired():
                 if event.name == "WoodPlus":
                     self.wood += event.counter
-                    self.event_list.push(events.Event("WoodPlusDebuff", "Debuff", seconds = 3)) # Can't reactivate gathering wood for 3 sec
+                    self.events.push(events.Event("WoodPlusDebuff", "Debuff", seconds = 3)) # Can't reactivate gathering wood for 3 sec
                 elif event.name == "House":
                     self.house += 1
                 elif event.name == "Granary":
                     self.granary += 1
                 elif event.name == "Storage":
                     self.storage += 1
-            self.event_list.remove_expired()
+            self.events.remove_expired()
 
-        if self.event_list.event_exist("WoodPlus"):
+        if self.events.exist("WoodPlus"):
             self.event_wood_plus_production(tick = 1)
 
     def init_event(self) -> None:
         """ Init event at the start of the game, add value to counter for time passed """
-        if self.event_list.event_exist("WoodPlus"):
-            if self.event_list.select_event("WoodPlus").is_event_passed():
-                time_elapsed = self.event_list.select_event("WoodPlus").ending_time() - events.get_time(self.time)
-            else:
-                time_elapsed = events.now() - events.get_time(self.time)
+        if self.events.exist("WoodPlus"):
+            end_time = events.now()
+            if self.events.get("WoodPlus").is_passed():
+                end_time = self.events.get("WoodPlus").ending_time()
+            time_elapsed = end_time - events.get_time(self.time)
             self.event_wood_plus_production(seconds = time_elapsed.seconds)
 
     def event_wood_plus_production(self, seconds: int = 0, tick: int = 0) -> None:
         """ Add value to counter of the wood gathering event, depends to the number of lumber """
-        if self.event_list.event_exist("WoodPlus"):
+        if self.events.exist("WoodPlus"):
             total_time = seconds * self.fps + tick
-            self.event_list.select_event("WoodPlus").counter += total_time * (0.2 + self.lumber_production() * 0.5 / self.fps)
+            self.events.get("WoodPlus").counter += total_time * (0.2 + self.lumber_production() * 0.5 / self.fps)

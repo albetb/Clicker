@@ -5,3 +5,4 @@ savegame.txt
 virtualenv
 venv
 __pycache__
+.vscode

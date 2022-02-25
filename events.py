@@ -67,7 +67,7 @@ class Event:
         """ Return ending time of event """
         return (self.starting_time if self.starting_time != None else now()) + self.timedelta
 
-    def is_event_passed(self) -> bool:
+    def is_passed(self) -> bool:
         """ Return True if ending time of event is passed """
         return self.starting_time != None and now() >= self.ending_time() - timedelta(seconds = 1)
 
@@ -103,11 +103,11 @@ class Event:
             "timedelta": str(self.timedelta.seconds)
         }
 
-class EventQueue:
-    def __init__(self, event_list: list = []) -> None:
-        self.event_list = event_list
+class Events:
+    def __init__(self, events: list = []) -> None:
+        self.events = events
 
-    def deserialize_event_list(self, event_dict_list: list) -> None:
+    def deserialize_events(self, event_dict_list: list) -> None:
         """ Load a list of event from a list of dictionary """
         for event_dict in event_dict_list:
             event = Event(name = event_dict["name"],
@@ -118,63 +118,63 @@ class EventQueue:
             event.set_timedelta(int(event_dict["timedelta"]))
             self.push(event)
     
-    def serialize_event_list(self) -> None:
+    def serialize_events(self) -> None:
         """ Serialize event list as a list of dictionary """
-        return [event.serialize_event() for event in self.event_list]
+        return [event.serialize_event() for event in self.events]
 
     def push(self, event: Event) -> None:
         """ Insert an event in list """
         if event.type == "Building":
-            event.counter = self.count_event_type("Building")
-            if event.counter > 0: # Block building if there is another one in construction
-                event.starting_time = self.building_queue()[event.counter - 1].ending_time()
-        self.event_list.append(event)
+            event.counter = self.count_type("Building")
+            if event.counter > 0: # Postpone building if there is another one in construction
+                event.starting_time = self.buildings()[event.counter - 1].ending_time()
+        self.events.append(event)
 
-    def remove_event(self, event: Event) -> None:
+    def _remove_event(self, event: Event) -> None:
         """ Given an event remove that from list """
-        self.event_list.remove(event)
-        if event.type == "Building":
-            for evt in self.event_list:
+        self.events.remove(event)
+        if event.type == "Building": # Reduce all counter for all building by one
+            for evt in self.events:
                 if evt.type == "Building":
                     evt.counter -= 1
 
     def remove(self, event_name: str) -> None:
         """ Given a name remove the first event with that name from list """
-        for event in self.event_list:
+        for event in self.events:
             if event.name == event_name:
-                self.remove_event(event)
+                self._remove_event(event)
     
-    def expired_event(self) -> list:
+    def expired(self) -> list:
         """ Return a list of event with ending time more or equal of current time """
-        return [event for event in self.event_list if event.is_event_passed()]
+        return [event for event in self.events if event.is_passed()]
 
     def remove_expired(self) -> None:
         """ Remove all expired event from list """
-        for event in self.expired_event():
-            self.remove_event(event)
+        for event in self.expired():
+            self._remove_event(event)
 
-    def event_exist(self, event_name: str) -> bool:
+    def exist(self, event_name: str) -> bool:
         """ Given a name return True if exist an event with that name """
-        return self.count_event_name(event_name) > 0
+        return self.count(event_name) > 0
 
-    def event_type_exist(self, event_type: str) -> bool:
+    def exist_type(self, event_type: str) -> bool:
         """ Given a type return True if exist an event with that type """
-        return self.count_event_type(event_type) > 0
+        return self.count_type(event_type) > 0
 
-    def count_event_type(self, event_type: str) -> bool:
+    def count_type(self, event_type: str) -> int:
         """ Given a type return the number of event with that type """
-        return len([1 for event in self.event_list if event.type == event_type])
+        return len([1 for event in self.events if event.type == event_type])
 
-    def count_event_name(self, event_name: str) -> bool:
+    def count(self, event_name: str) -> int:
         """ Given a name return the number of event with that name """
-        return len([1 for event in self.event_list if event.name == event_name])
+        return len([1 for event in self.events if event.name == event_name])
 
-    def select_event(self, event_name: str) -> Event:
+    def get(self, event_name: str) -> Event:
         """ Given a name return first event with that name """
-        return next((event for event in self.event_list if event.name == event_name), None)
+        return next((event for event in self.events if event.name == event_name), None)
 
-    def building_queue(self) -> list:
+    def buildings(self) -> list:
         """ Return a list of all building events in order """
-        building_queue = [event for event in self.event_list if event.type == "Building"]
-        building_queue.sort(key=lambda event: event.counter)
-        return building_queue
+        buildings = [event for event in self.events if event.type == "Building"]
+        buildings.sort(key=lambda event: event.counter) # Sort the building based on counter value
+        return buildings

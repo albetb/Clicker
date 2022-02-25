@@ -188,16 +188,16 @@ class Ui:
         """ Draw button in the explore menu """
         if self.current_menu == self.EXPLORE:
             
-            ## Wood+ button and timer
-            if self.game.event_list.event_exist("WoodPlus"):
-                self.wood_timer.draw(self.display, text = self.game.event_list.select_event("WoodPlus").format_lasting_time())
+            # Wood+ button and timer
+            if self.game.events.exist("WoodPlus"):
+                self.wood_timer.draw(self.display, text = self.game.events.get("WoodPlus").format_lasting_time())
                 self.food_button.change(assets.SQUARE_PLUS_FOOD_DISABLED)
                 self.food_button.set_text(self.game.format_food_gathering(), GREY) # Set text grey
             else:
                 self.food_button.change(assets.SQUARE_PLUS_FOOD)
                 self.food_button.set_text(self.game.format_food_gathering())
             self.wood_button.draw(self.display)
-            ## Central food+ button
+            # Central food+ button
             self.food_button.draw(self.display)
 
     # --------------------> 🪓 MANAGE 🪓 <---------------------------------------------
@@ -238,15 +238,15 @@ class Ui:
         """ Draw button in the manage menu """
         if self.current_menu == self.MANAGE:
 
-            ## Harvester buttons
+            # Harvester buttons
             self.harvester_tag.draw(self.display, text = self.game.format_harvester())
             self.harvester_plus.draw(self.display)
             self.harvester_minus.draw(self.display)
-            ## Lumber buttons
+            # Lumber buttons
             self.lumber_tag.draw(self.display, text = self.game.format_lumber())
             self.lumber_plus.draw(self.display)
             self.lumber_minus.draw(self.display)
-            ## Population+ button and cost
+            # Population+ button and cost
             self.pop_cost.draw(self.display, text = self.game.format_population_cost())
             self.pop_plus.draw(self.display)
             
@@ -261,7 +261,7 @@ class Ui:
                 y_mov = self.mouse[1] - self.starting_position[1] # If y_mov up image down
                 self.starting_position = self.mouse
             elif self.building0.y > 0:
-                y_mov = -1 * max(self.building1.y / 5, 1) # Slowly pushes queue up
+                y_mov = -1 * max(self.building1.y / 6, 1) # Slowly pushes queue up
             self.building0.move(down = y_mov, lock = True, max_w = self.building_frame.w, max_h = self.building_frame.h)
             self.building1.y = self.building0.y + self.building0.h + 5
             self.building2.y = self.building1.y + self.building1.h + 5
@@ -286,44 +286,44 @@ class Ui:
 
             self.building_frame.change()
 
-            house_enabled = (self.game.wood >= self.game.house_cost() and self.game.event_list.count_event_type("Building") < 3)
+            house_enabled = (self.game.wood >= self.game.house_cost() and self.game.events.count_type("Building") < 3)
             self.house_plus.change(assets.RIGHT_ARROW_PLUS if house_enabled else assets.RIGHT_ARROW_PLUS_DISABLED)
             self.square_house.draw(self.display, text = int(self.game.house))
             self.house_cost.draw(self.display, text = self.game.format_house_cost())
             self.house_plus.draw(self.display)
 
-            granary_enabled = (self.game.wood >= self.game.granary_cost() and self.game.event_list.count_event_type("Building") < 3)
+            granary_enabled = (self.game.wood >= self.game.granary_cost() and self.game.events.count_type("Building") < 3)
             self.granary_plus.change(assets.RIGHT_ARROW_PLUS if granary_enabled else assets.RIGHT_ARROW_PLUS_DISABLED)
             self.square_granary.draw(self.display, text = int(self.game.granary))
             self.granary_cost.draw(self.display, text = self.game.format_granary_cost())
             self.granary_plus.draw(self.display)
 
-            storage_enabled = (self.game.wood >= self.game.storage_cost() and self.game.event_list.count_event_type("Building") < 3)
+            storage_enabled = (self.game.wood >= self.game.storage_cost() and self.game.events.count_type("Building") < 3)
             self.storage_plus.change(assets.RIGHT_ARROW_PLUS if storage_enabled else assets.RIGHT_ARROW_PLUS_DISABLED)
             self.square_storage.draw(self.display, text = int(self.game.storage))
             self.storage_cost.draw(self.display, text = self.game.format_storage_cost())
             self.storage_plus.draw(self.display)
 
-            if self.game.event_list.event_type_exist("Building"):
+            if self.game.events.exist_type("Building"):
                 image = {
                     "House": self.house,
                     "Granary": self.granary,
                     "Storage": self.storage
                 }
 
-                if len(self.game.event_list.building_queue()) > 0:
+                if len(self.game.events.buildings()) > 0:
                     self.building0.change()
-                    building0 = self.game.event_list.building_queue()[0]
+                    building0 = self.game.events.buildings()[0]
                     image[building0.name].draw(self.building0.picture)
                     self.building0.draw(self.building_frame.picture, text = building0.format_lasting_time())
-                if len(self.game.event_list.building_queue()) > 1:
+                if len(self.game.events.buildings()) > 1:
                     self.building1.change()
-                    building1 = self.game.event_list.building_queue()[1]
+                    building1 = self.game.events.buildings()[1]
                     image[building1.name].draw(self.building1.picture)
                     self.building1.draw(self.building_frame.picture, text = building1.format_lasting_time())
-                if len(self.game.event_list.building_queue()) > 2:
+                if len(self.game.events.buildings()) > 2:
                     self.building2.change()
-                    building2 = self.game.event_list.building_queue()[2]
+                    building2 = self.game.events.buildings()[2]
                     image[building2.name].draw(self.building2.picture)
                     self.building2.draw(self.building_frame.picture, text = building2.format_lasting_time())
 
