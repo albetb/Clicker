@@ -91,13 +91,11 @@ class Image:
         self.textSize = textSize
 
     def change(self, path: str = "") -> None:
-        """ Change picture of image,
-            note that you have to change picture before drawing it """
+        """ Change picture of image, use this before drawing it """
         self.picture = scale_image(load_image(self.path if path == "" else path), (self.w, self.h))
 
     def draw(self, display, clipping_area: tuple = None, text = "") -> None:
-        """ Display image on screen based on the menu,
-            with clipping_area you can set clipping area """
+        """ Display image on screen based on the menu, clipping area set boundaries for button drawing """
         self.clipping_area = self.clipping_area if clipping_area == None else Rect(*clipping_area)
         display.blit(self.picture, (self.x, self.y), self.clipping_area)
         if text != "":

@@ -43,22 +43,22 @@ class Game:
 
         # Offline production
         if self.time != "":
-            offline_production = min(events.offline_time(self.time), MAX_OFFLINE_TIME) * self.fps * OFFLINE_PRODUCTION_MULTIPLIER
-            self.food += self.harvester_production() * offline_production / self.fps
-            self.wood += self.lumber_production() * offline_production / self.fps
+            offline_production = min(events.offline_time(self.time), MAX_OFFLINE_TIME) * OFFLINE_PRODUCTION_MULTIPLIER
+            self.food += self.harvester_production() * offline_production
+            self.wood += self.lumber_production() * offline_production
 
         # Initialize event list
         if events_list != "":
-            self.events.deserialize_events(events)
+            self.events.deserialize_events(events_list)
             self.init_event()
 
     # ----------> Save game <----------------------------------------
 
-    async def save_current_time(self) -> None:
+    def save_current_time(self) -> None:
         """ Save current time as a formatted string in self.time """
         self.time = events.current_time()
 
-    async def save_game(self):
+    def save_game(self):
         """ Save the current game to a .txt file as JSON """
         with open('savegame.txt', 'w+') as file:
             file.write(dumps(self.serialize()))
@@ -183,10 +183,18 @@ class Game:
             else:
                 self.events.push(events.Event("WoodPlus", "Resources", seconds = 2 * 60 + self.lumber))
 
-    async def autominer(self) -> None:
-        """ Add food and wood for worker production, reduce food for people eating in harvester_production() """
-        self.food = round(min(self.food + self.harvester_production() / self.fps, self.food_limit()), 2)
-        self.wood = round(min(self.wood + self.lumber_production() / self.fps, self.wood_limit()), 2)
+    def autominer(self) -> None:
+        """ Add food and wood for worker production """
+        if not self.events.exist("Food"):
+            food_value = self.harvester_production()
+            self.events.push(events.Event("Food", "Production", food_value, milliseconds = 1000))
+        if not self.events.exist("Wood"):
+            wood_value = self.lumber_production()
+            self.events.push(events.Event("Wood", "Production", wood_value, milliseconds = 1000))
+        self.starving()
+
+    def starving(self) -> None:
+        """ Reduce people if food is too low """
         if self.food < -100: # If food < -100 population is reduced
             self.food = 0
             self.population = max(0, self.population - 1)
@@ -223,17 +231,17 @@ class Game:
 
     def increment_lumber(self, num: int = 1) -> None:
         """ Add a number of people to lumber """
-        lumber_plus = min(self.unemployed(), int(num))
-        self.lumber += lumber_plus
+        lumber_added = min(self.unemployed(), int(num))
+        self.lumber += lumber_added
         if self.events.exist("WoodPlus"):
-            self.events.get("WoodPlus").add_time(seconds = lumber_plus)
+            self.events.get("WoodPlus").add_time(seconds = lumber_added)
 
     def decrement_lumber(self, num: int = 1) -> None:
         """ Subtract a number of people to lumber """
-        lumber_minus = min(self.lumber, int(num))
-        self.lumber -= lumber_minus
+        lumber_removed = min(self.lumber, int(num))
+        self.lumber -= lumber_removed
         if self.events.exist("WoodPlus"):
-            self.events.get("WoodPlus").subtract_time(seconds = lumber_minus)
+            self.events.get("WoodPlus").subtract_time(seconds = lumber_removed)
 
     def increment_house(self, check: bool) -> None:
         """ Add a house to production, will be added after some times """
@@ -269,7 +277,7 @@ class Game:
 
     def format_food_gathering(self) -> str:
         """ Return food produced form food gathering as a formatted string for displaying """
-        return self.format_number(self.food_gathering(dry_run=True), "high")
+        return self.format_number(self.food_gathering(dry_run = True), "high")
         
     def format_harvester(self) -> str:
         """ Return harvester as a formatted string for displaying """
@@ -318,20 +326,26 @@ class Game:
 
     # ----------> Events <----------------------------------------
 
-    async def manage_event(self) -> None:
+    def manage_event(self) -> None:
         """ Manage event list every tick, for adding value to counter or checking if an event is expired """
-        if len(self.events.expired()) > 0:
-            for event in self.events.expired():
-                if event.name == "WoodPlus":
-                    self.wood += event.counter
-                    self.events.push(events.Event("WoodPlusDebuff", "Debuff", seconds = 3)) # Can't reactivate gathering wood for 3 sec
-                elif event.name == "House":
-                    self.house += 1
-                elif event.name == "Granary":
-                    self.granary += 1
-                elif event.name == "Storage":
-                    self.storage += 1
-            self.events.remove_expired()
+        events_expired = self.events.expired()
+        self.events.remove_expired()
+        if len(events_expired) > 0:
+            for event in events_expired:
+                match event.name:
+                    case "Food":
+                        self.food = round(min(self.food + event.counter, self.food_limit()), 2)
+                    case "Wood":
+                        self.wood = round(min(self.wood + event.counter, self.wood_limit()), 2)
+                    case "WoodPlus":
+                        self.wood = round(min(self.wood + event.counter, self.wood_limit()), 2)
+                        self.events.push(events.Event("WoodPlusDebuff", "Debuff", seconds = 3)) # Can't reactivate gathering wood for 3 sec
+                    case "House":
+                        self.house += 1
+                    case "Granary":
+                        self.granary += 1
+                    case "Storage":
+                        self.storage += 1
 
         if self.events.exist("WoodPlus"):
             self.event_wood_plus_production(tick = 1)

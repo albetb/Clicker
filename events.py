@@ -45,12 +45,13 @@ def offline_time(time: str) -> int:
 # ----------> Event class <----------------------------------------
 
 class Event:
-    def __init__(self, name: str, type: str = "", counter: float = 0, days: int = 0, hours: int = 0, minutes: int = 0, seconds: int = 0) -> None:
+    def __init__(self, name: str, type: str = "", counter: float = 0, 
+                 days: int = 0, hours: int = 0, minutes: int = 0, seconds: int = 0, milliseconds: int = 0) -> None:
         self.name = name # Event name
         self.type = type # Event type (eg. Resources or Building)
         self.counter = counter # Not time related, eventually contains a number who give reward at the event end
         self.starting_time = now() # Don't change once is initialized except when loading game
-        self.timedelta = timedelta(days = days, hours = hours, minutes = minutes, seconds = seconds) # Event duration
+        self.timedelta = timedelta(days = days, hours = hours, minutes = minutes, seconds = seconds, milliseconds = milliseconds) # Event duration
 
     def set_starting_time(self, starting_time: str or datetime) -> None:
         """ Take a string o a datetime object and set it as current starting time """
@@ -157,6 +158,10 @@ class Events:
         """ Given a name return True if exist an event with that name """
         return self.count(event_name) > 0
 
+    def count(self, event_name: str) -> int:
+        """ Given a name return the number of event with that name """
+        return len([1 for event in self.events if event.name == event_name])
+
     def exist_type(self, event_type: str) -> bool:
         """ Given a type return True if exist an event with that type """
         return self.count_type(event_type) > 0
@@ -164,10 +169,6 @@ class Events:
     def count_type(self, event_type: str) -> int:
         """ Given a type return the number of event with that type """
         return len([1 for event in self.events if event.type == event_type])
-
-    def count(self, event_name: str) -> int:
-        """ Given a name return the number of event with that name """
-        return len([1 for event in self.events if event.name == event_name])
 
     def get(self, event_name: str) -> Event:
         """ Given a name return first event with that name """
@@ -178,3 +179,4 @@ class Events:
         buildings = [event for event in self.events if event.type == "Building"]
         buildings.sort(key=lambda event: event.counter) # Sort the building based on counter value
         return buildings
+        
